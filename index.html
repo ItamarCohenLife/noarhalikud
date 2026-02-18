@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>יצירת קישור אישי להפצה - נוער הליכוד</title>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blue-likud: #0b3d91;
+            --blue-dark: #082c66;
+            --blue-light: #f4f8ff;
+            --white: #ffffff;
+            --gray-dark: #1f2937;
+            --gray: #4b5563;
+            --border: #e5e7eb;
+            --success: #1f8f3a;
+            --whatsapp: #1fa855;
+        }
+
+        body {
+            font-family: 'Assistant', sans-serif;
+            background: linear-gradient(135deg, #eef2f7, #f8fafc);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .card {
+            background: var(--white);
+            max-width: 520px;
+            width: 100%;
+            border-radius: 18px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+            overflow: hidden;
+            border-top: 6px solid var(--blue-likud);
+        }
+
+        .header {
+            background: var(--blue-likud);
+            color: white;
+            padding: 26px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .content {
+            padding: 30px 25px;
+            line-height: 1.75;
+            color: var(--gray);
+        }
+
+        .intro-text {
+            font-weight: 700;
+            font-size: 1.15rem;
+            margin-bottom: 18px;
+            color: var(--gray-dark);
+        }
+
+        .instructions {
+            background: var(--blue-light);
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border);
+        }
+
+        .instructions strong {
+            display: block;
+            margin-bottom: 12px;
+            color: var(--gray-dark);
+        }
+
+        .instruction-item {
+            margin-bottom: 8px;
+            padding-right: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: var(--gray-dark);
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            border-color: var(--blue-likud);
+            box-shadow: 0 0 0 3px rgba(11,61,145,0.1);
+            outline: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 12px;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--blue-likud);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--blue-dark);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-whatsapp {
+            background: var(--whatsapp);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+
+        #resultArea {
+            display: none;
+            margin-top: 30px;
+            padding: 18px;
+            border: 1px solid var(--blue-likud);
+            border-radius: 12px;
+            background: #fafcff;
+            text-align: center;
+        }
+
+        .link-display {
+            background: #f3f4f6;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            word-break: break-all;
+            margin: 12px 0;
+            border: 1px solid var(--border);
+        }
+
+        .important-note {
+            font-size: 0.9rem;
+            background: #fff7ed;
+            padding: 14px;
+            border-right: 4px solid #f59e0b;
+            margin-top: 20px;
+            border-radius: 6px;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.9rem;
+            margin-top: 28px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header">
+        <h1>הנבחרת של נוער הליכוד</h1>
+    </div>
+
+    <div class="content">
+        <p class="intro-text">שלום לכל פעילי נוער הליכוד!</p>
+        <p>אנחנו יוצאים למבצע הדיגיטלי הגדול ביותר שלנו במטרה להגדיל את כוחנו, לחזק את הקבוצות ולהביא את הקול הלאומי לכל נער ונערה בישראל.</p>
+
+        <div class="instructions">
+            <strong>אז איך זה עובד?</strong>
+            <div class="instruction-item">1. נרשמים כאן בטופס עם הפרטים האישיים.</div>
+            <div class="instruction-item">2. מיד לאחר השליחה תקבלו קישור אישי ייחודי להפצה.</div>
+            <div class="instruction-item">
+                3. חבר הצטרף דרך הקישור שלכם ומילא בטופס שהגיע מפעיל הנוער הליכוד - נספר לזכותכם במערכת! 
+            </div>
+        </div>
+
+        <p>מעבר לחיזוק התנועה, שלושת הפעילים שיצרפו את כמות החברים הגבוהה ביותר ייכנסו לנבחרת של נוער הליכוד.</p>
+
+        <div class="form-group">
+            <label for="fullName">שם מלא:</label>
+            <input type="text" id="fullName">
+        </div>
+
+        <div class="form-group">
+            <label for="phone">מספר טלפון:</label>
+            <input type="tel" id="phone">
+        </div>
+
+        <button class="btn btn-primary" onclick="generate()">צור את הקישור האישי שלי</button>
+
+        <div id="resultArea">
+            <strong>הקישור האישי שלך מוכן!</strong>
+            <div id="finalLink" class="link-display"></div>
+            <button class="btn btn-success" onclick="copy()">העתק קישור</button>
+            <a id="whatsappLink" href="#" target="_blank" class="btn btn-whatsapp">שתף ישירות ב-WhatsApp</a>
+        </div>
+
+        <div class="important-note">
+            <b>לוח הזמנים:</b> התחרות תיערך עד ה-01.04.2026.<br>
+            <b>הערות:</b> ההשתתפות / הזכיה בתחרות מחייבת הצטרפות לנוער הליכוד.<br>
+        </div>
+
+        <div class="footer">
+            בהצלחה לכולם<br>
+            <strong>מועצת נוער הליכוד</strong>
+        </div>
+    </div>
+</div>
+
+<script>
+    function generate() {
+        const phoneInput = document.getElementById('phone').value.trim();
+        const nameInput = document.getElementById('fullName').value.trim();
+
+        if (!phoneInput || !nameInput) {
+            alert("נא למלא שם מלא ומספר טלפון כדי להמשיך");
+            return;
+        }
+
+        const cleanPhone = phoneInput.replace(/\D/g, '');
+        const baseUrl = "https://docs.google.com/forms/d/e/1FAIpQLSdLH0coeRzoY7CjKUoAISOAHGed5IfMc6gxUFDggf-zY0Ri1g/viewform?usp=pp_url&entry.1474050890=";
+        const fullLink = baseUrl + cleanPhone;
+
+        document.getElementById('finalLink').innerText = fullLink;
+        document.getElementById('resultArea').style.display = 'block';
+
+        const message = `שלום, רציתי להזמין אותך להצטרף לנוער הליכוד.\nלהצטרפות דרך הקישור האישי שלי:\n${fullLink}`;
+        document.getElementById('whatsappLink').href = "https://api.whatsapp.com/send?text=" + encodeURIComponent(message);
+
+        setTimeout(() => {
+            document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    }
+
+    function copy() {
+        const link = document.getElementById('finalLink').innerText;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(link).then(() => {
+                alert("הקישור הועתק! עכשיו אפשר להדביק ולשלוח לחברים.");
+            });
+        } else {
+            const textArea = document.createElement("textarea");
+            textArea.value = link;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert("הקישור הועתק!");
+        }
+    }
+</script>
+
+</body>
+</html>
