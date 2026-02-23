@@ -13,6 +13,7 @@
         :root { 
             --vh: 1vh; --accent: #007bff; --bg: #050505; --panel: #1a1a1a; 
             --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom);
+            --brand-blue: #242362; /* הכחול החדש */
         }
 
         * { 
@@ -24,7 +25,7 @@
         html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; background-color: var(--bg); }
         body { display: flex; flex-direction: column; height: calc(var(--vh, 1vh) * 100); }
 
-        /* סרגל עליון לבן */
+        /* סרגל עליון */
         .app-bar {
             height: 60px; background: var(--panel); display: flex; align-items: center; 
             justify-content: space-between; padding: var(--safe-top) 20px 0 20px; 
@@ -33,17 +34,17 @@
         .logo-top { font-weight: bold; font-size: 18px; color: #ffffff; }
         .logo-bottom { font-size: 11px; opacity: 0.6; color: #ffffff; letter-spacing: 1px; }
 
-        /* אזור העבודה - מבטיח ראות מלאה במחשב */
+        /* אזור העבודה */
         .editor-container {
             flex: 1; position: relative; display: flex; align-items: center; 
             justify-content: center; background: #000; 
             overflow: hidden;
-            padding: 40px 20px 120px 20px; /* מרווח תחתון גדול יותר בשביל הטולבר */
+            padding: 40px 20px 120px 20px;
         }
 
         #canvas-wrapper { 
             box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 0 40px rgba(0,0,0,0.5); 
-            position: relative; background: #001f3f;
+            position: relative; background: var(--brand-blue);
             transition: transform 0.2s ease;
         }
 
@@ -52,15 +53,19 @@
             width: 90%; max-width: 480px; background: rgba(26,26,26,0.98); 
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             padding: 10px 5px; border-radius: 30px; display: flex; 
-            justify-content: space-around; border: 1px solid rgba(255,255,255,0.1);
+            justify-content: space-evenly; gap: 2px; border: 1px solid rgba(255,255,255,0.1);
             position: absolute; bottom: calc(20px + var(--safe-bottom)); 
             left: 50%; transform: translateX(-50%); z-index: 500;
         }
 
         .tool-btn {
-            flex: 1; display: flex; flex-direction: column; align-items: center;
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
             background: transparent; border: none; color: white; gap: 4px; cursor: pointer;
+            transition: transform 0.1s active;
         }
+        /* אפקט לחיצה */
+        .tool-btn:active { transform: scale(0.9); }
+        
         .tool-btn i { font-size: 18px; font-style: normal; }
         .tool-btn span { font-size: 9px; font-weight: bold; }
 
@@ -68,11 +73,14 @@
         .floating-menu {
             position: absolute; display: none; background: var(--accent);
             border-radius: 12px; padding: 5px; gap: 5px; z-index: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .floating-menu button {
             background: white; border: none; border-radius: 8px; 
             padding: 8px 14px; font-size: 12px; font-weight: bold; cursor: pointer;
         }
+        /* כפתור אישור חיתוך ייחודי */
+        #confirmCropBtn { background: #28a745; color: white; display: none; }
 
         /* עורך טקסט */
         #textEditorOverlay {
@@ -113,16 +121,18 @@
         <div id="canvas-wrapper"><canvas id="storyCanvas"></canvas></div>
         
         <div id="floatingMenu" class="floating-menu">
-            <button id="cropBtn" onclick="startCrop()" style="display:none;">חתוך</button>
-            <button onclick="duplicateObj()">שכפל</button>
-            <button onclick="deleteObj()" style="color: #ff4444;">מחק</button>
+            <button id="cropBtn" onclick="startCrop()">חתוך</button>
+            <button id="confirmCropBtn" onclick="finishCrop()">אישור חיתוך</button>
+            <button id="duplicateBtn" onclick="duplicateObj()">שכפל</button>
+            <button id="deleteBtn" onclick="deleteObj()" style="color: #ff4444;">מחק</button>
         </div>
     </div>
 
     <div class="toolbar">
         <button class="tool-btn" onclick="openTextEditor()"><i>T</i><span>טקסט</span></button>
-        <div style="position: relative;">
-            <button class="tool-btn" onclick="toggleEmojiPicker()"><i>😍</i><span>אייקון</span></button>
+        
+        <div style="position: relative; flex: 1; display: flex; justify-content: center;">
+            <button class="tool-btn" style="width: 100%;" onclick="toggleEmojiPicker()"><i>😍</i><span>אייקון</span></button>
             <div id="emojiPicker" class="emoji-picker">
                 <button class="tool-btn" onclick="addIcon('❤️')">❤️</button><button class="tool-btn" onclick="addIcon('🔥')">🔥</button>
                 <button class="tool-btn" onclick="addIcon('✨')">✨</button><button class="tool-btn" onclick="addIcon('✅')">✅</button>
@@ -130,6 +140,7 @@
                 <button class="tool-btn" onclick="addIcon('💪')">💪</button><button class="tool-btn" onclick="addIcon('🚨')">🚨</button>
             </div>
         </div>
+        
         <label class="tool-btn"><i>🖼️</i><span>תמונה</span><input type="file" id="imageLoader" accept="image/*" style="display:none"></label>
         <button class="tool-btn" onclick="toggleBold()"><i>B</i><span>הדגשה</span></button>
         <button class="tool-btn" onclick="document.getElementById('colorInput').click()">
@@ -146,7 +157,6 @@
     </div>
 
     <script>
-        // מניעת זום וכפיית גובה
         const fixHeight = () => {
             document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
             resizeCanvas();
@@ -154,11 +164,11 @@
         window.addEventListener('resize', fixHeight);
 
         const canvas = new fabric.Canvas('storyCanvas', {
-            width: 1080, height: 1920, backgroundColor: '#001f3f', selection: false,
+            width: 1080, height: 1920, backgroundColor: '#242362', selection: false,
             preserveObjectStacking: true
         });
 
-        const bgOptions = ['#001f3f', '#87CEEB'];
+        const bgOptions = ['#242362', '#87CEEB', '#000000'];
         let bgIdx = 0, history = [];
 
         fabric.Object.prototype.set({
@@ -174,40 +184,30 @@
             });
         }
 
-        // פונקציית Resize משופרת למחשב
         function resizeCanvas() {
             const container = document.querySelector('.editor-container');
             const paddingH = 40;
-            const paddingV = 160; // מקום ל-Toolbar וסרגל עליון
-
+            const paddingV = 160; 
             const availableW = container.clientWidth - paddingH;
             const availableH = container.clientHeight - paddingV;
             const ratio = 1080 / 1920;
-
             let newW, newH;
-
-            // אם המסך רחב (מחשב) - הגובה הוא המגבלה
             if (availableW / availableH > ratio) {
-                newH = availableH;
-                newW = availableH * ratio;
+                newH = availableH; newW = availableH * ratio;
             } else {
-                // אם המסך צר (נייד) - הרוחב הוא המגבלה
-                newW = availableW;
-                newH = availableW / ratio;
+                newW = availableW; newH = availableW / ratio;
             }
-
             canvas.setZoom(newW / 1080);
-            canvas.setWidth(newW);
-            canvas.setHeight(newH);
-
+            canvas.setWidth(newW); canvas.setHeight(newH);
             const wrapper = document.getElementById('canvas-wrapper');
-            wrapper.style.width = newW + "px";
-            wrapper.style.height = newH + "px";
+            wrapper.style.width = newW + "px"; wrapper.style.height = newH + "px";
             canvas.requestRenderAll();
         }
 
         const overlay = document.getElementById('textEditorOverlay'), textInput = document.getElementById('textEditorInput');
         let currentEditingObj = null;
+        let cropRect = null;
+        let targetImg = null;
 
         function openTextEditor(obj = null) {
             currentEditingObj = obj; textInput.value = obj ? obj.text : "";
@@ -239,29 +239,46 @@
             if (obj && obj.type === 'textbox') {
                 const newWeight = obj.fontWeight === 'bold' ? 'normal' : 'bold';
                 obj.set('fontWeight', newWeight);
-                obj.initDimensions(); 
-                obj.setCoords(); 
-                canvas.requestRenderAll(); 
-                saveState();
+                obj.initDimensions(); obj.setCoords(); canvas.requestRenderAll(); saveState();
             }
         }
 
+        // פונקציות חיתוך חדשות
         function startCrop() {
-            const obj = canvas.getActiveObject();
-            if (!obj || obj.type !== 'image') return;
-            const clipRect = new fabric.Rect({
-                left: obj.left, top: obj.top, width: obj.getScaledWidth()/1.5, height: obj.getScaledHeight()/1.5,
-                fill: 'rgba(255,255,255,0.3)', stroke: 'white', strokeDashArray: [5, 5], originX: 'center', originY: 'center'
+            targetImg = canvas.getActiveObject();
+            if (!targetImg || targetImg.type !== 'image') return;
+
+            cropRect = new fabric.Rect({
+                left: targetImg.left, top: targetImg.top,
+                width: targetImg.getScaledWidth() / 1.5,
+                height: targetImg.getScaledHeight() / 1.5,
+                fill: 'rgba(255,255,255,0.3)', stroke: 'white', strokeDashArray: [5, 5],
+                originX: 'center', originY: 'center', cornerSize: 20
             });
-            canvas.add(clipRect); canvas.setActiveObject(clipRect);
-            const btn = document.getElementById('cropBtn');
-            btn.innerText = "אשר";
-            btn.onclick = () => {
-                obj.set('clipPath', clipRect);
-                canvas.remove(clipRect); canvas.setActiveObject(obj);
-                btn.innerText = "חתוך"; btn.onclick = startCrop;
-                canvas.renderAll(); saveState();
-            };
+
+            canvas.add(cropRect);
+            canvas.setActiveObject(cropRect);
+            
+            document.getElementById('cropBtn').style.display = 'none';
+            document.getElementById('confirmCropBtn').style.display = 'inline-block';
+            document.getElementById('duplicateBtn').style.display = 'none';
+        }
+
+        function finishCrop() {
+            if (!targetImg || !cropRect) return;
+
+            targetImg.set('clipPath', cropRect);
+            canvas.remove(cropRect);
+            canvas.setActiveObject(targetImg);
+            
+            document.getElementById('confirmCropBtn').style.display = 'none';
+            document.getElementById('cropBtn').style.display = 'inline-block';
+            document.getElementById('duplicateBtn').style.display = 'inline-block';
+            
+            canvas.renderAll();
+            saveState();
+            targetImg = null;
+            cropRect = null;
         }
 
         function toggleEmojiPicker() {
@@ -287,7 +304,11 @@
             menu.style.display = 'flex';
             menu.style.left = `${rect.left + (rect.width/2) - 60}px`;
             menu.style.top = `${rect.top - 80}px`;
-            document.getElementById('cropBtn').style.display = (obj.type === 'image') ? 'inline-block' : 'none';
+            
+            // הצגת כפתור חיתוך רק לתמונות
+            const isImage = obj.type === 'image' && !cropRect;
+            document.getElementById('cropBtn').style.display = isImage ? 'inline-block' : 'none';
+            document.getElementById('duplicateBtn').style.display = cropRect ? 'none' : 'inline-block';
         }
 
         function duplicateObj() {
@@ -330,7 +351,7 @@
         function resetCanvas() {
             if(confirm("למחוק הכל?")) { 
                 canvas.getObjects().forEach(o => canvas.remove(o)); 
-                canvas.setBackgroundColor('#001f3f', () => { canvas.renderAll(); saveState(); });
+                canvas.setBackgroundColor('#242362', () => { canvas.renderAll(); saveState(); });
             }
         }
 
@@ -343,8 +364,7 @@
             if(history.length > 1) {
                 history.pop();
                 canvas.loadFromJSON(history[history.length-1], () => {
-                    loadLogo();
-                    canvas.renderAll();
+                    loadLogo(); canvas.renderAll();
                 });
             }
         }
