@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>עיצוב סטורי - צוות דוברות</title>
+    <title>עורך סטורי מקצועי</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
         @font-face {
@@ -23,7 +23,8 @@
             box-sizing: border-box; 
             font-family: 'FtMonopol', sans-serif; 
             -webkit-tap-highlight-color: transparent;
-            touch-action: none;
+            touch-action: none; /* קריטי למניעת באגים במובייל */
+            user-select: none;
         }
 
         body {
@@ -37,6 +38,7 @@
             position: fixed;
         }
 
+        /* תפריט צד */
         .side-menu {
             width: 90px;
             background: #111;
@@ -44,9 +46,10 @@
             flex-direction: column;
             align-items: center;
             padding: env(safe-area-inset-top) 8px env(safe-area-inset-bottom) 8px;
-            gap: 10px;
+            gap: 12px;
             border-left: 1px solid #333;
             z-index: 100;
+            overflow-y: auto;
         }
 
         .menu-item {
@@ -61,65 +64,79 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
         }
 
-        .menu-item:active { background: #333; transform: scale(0.95); }
-        .menu-item b { font-size: 20px; }
+        .menu-item:hover { background: #252525; }
+        .menu-item:active { background: #333; transform: scale(0.92); }
+        .menu-item b { font-size: 22px; }
         .menu-item span { font-size: 11px; margin-top: 4px; font-weight: bold; }
 
+        .reset-btn { border-color: #552222 !important; color: #ff6666; }
         .save-btn { background: #333 !important; border: 1px solid #555 !important; margin-top: auto; height: 80px; }
 
-        .top-tools {
-            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 8px; z-index: 50; align-items: center;
-        }
-
-        .tool-group {
-            display: flex; background: rgba(30,30,30,0.95); padding: 4px; border-radius: 50px; border: 1px solid #444;
-        }
-
-        .tool-btn {
-            padding: 8px 14px; border-radius: 50px; border: none; color: #fff; background: transparent; cursor: pointer; 
-            font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 5px;
-        }
-
-        /* חלון עריכת טקסט */
-        #textEditorOverlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 1000;
+        /* אזור עריכה */
+        .main-editor {
+            flex-grow: 1;
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            background: #050505;
+            position: relative;
             padding: 20px;
         }
 
-        #textEditorInput {
-            width: 100%; max-width: 500px; background: transparent; border: none;
-            color: white; font-size: 32px; text-align: center; outline: none;
-            direction: rtl; line-height: 1.2; margin-bottom: 30px;
-        }
-
-        .editor-btns { display: flex; gap: 15px; width: 100%; max-width: 400px; }
-        .editor-btns button { flex: 1; padding: 15px; border-radius: 50px; border: none; font-weight: bold; }
-
-        .main-editor {
-            flex-grow: 1; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; background: #050505; position: relative;
-        }
-
         #canvas-wrapper { 
-            box-shadow: 0 0 30px rgba(255,255,255,0.05); 
-            border: 2px solid #222; /* מסגרת ברורה לסטורי */
-            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            border: 1px solid #333;
+            background: #111;
         }
 
-        .color-circle { position: relative; width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; background: linear-gradient(45deg, red, blue, green); }
+        /* כלי עריכה עליונים */
+        .top-tools {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px; z-index: 50;
+        }
+
+        .tool-group {
+            display: flex; background: rgba(25,25,25,0.9); padding: 5px; border-radius: 50px; border: 1px solid #444; backdrop-filter: blur(5px);
+        }
+
+        .tool-btn {
+            padding: 8px 16px; border-radius: 50px; border: none; color: #fff; background: transparent; cursor: pointer; 
+            font-weight: bold; font-size: 14px; transition: 0.2s; white-space: nowrap;
+        }
+        .tool-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+        .tool-btn.active { background: #fff; color: #000; }
+
+        /* Overlay עריכת טקסט */
+        #textEditorOverlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+            z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+        }
+
+        #textEditorInput {
+            width: 100%; max-width: 600px; background: transparent; border: none;
+            color: white; font-size: 36px; text-align: center; outline: none;
+            direction: rtl; line-height: 1.2; margin-bottom: 40px; resize: none;
+        }
+
+        .editor-btns { display: flex; gap: 20px; width: 100%; max-width: 400px; }
+        .editor-btns button { flex: 1; padding: 18px; border-radius: 50px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
+
+        .color-circle { position: relative; width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; background: linear-gradient(45deg, red, blue, green); }
         input[type="color"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
         input[type="file"] { display: none; }
+
+        /* התאמות למובייל */
+        @media (max-width: 600px) {
+            .side-menu { width: 75px; gap: 8px; }
+            .menu-item { min-height: 60px; }
+            .menu-item b { font-size: 18px; }
+            .tool-btn { padding: 6px 12px; font-size: 12px; }
+        }
     </style>
 </head>
 <body>
@@ -127,8 +144,8 @@
     <div id="textEditorOverlay">
         <textarea id="textEditorInput" placeholder="הקלידו כאן..."></textarea>
         <div class="editor-btns">
-            <button onclick="closeTextEditor(false)" style="background:#333; color:white;">ביטול</button>
-            <button onclick="closeTextEditor(true)" style="background:white; color:black;">אישור</button>
+            <button onclick="closeTextEditor(false)" style="background:#222; color:#fff;">ביטול</button>
+            <button onclick="closeTextEditor(true)" style="background:#fff; color:#000;">אישור</button>
         </div>
     </div>
 
@@ -138,10 +155,11 @@
         <label class="menu-item"><b>🖼️</b><span>תמונה</span><input type="file" id="imageLoader" accept="image/*"></label>
         <div class="menu-item">
             <div class="color-circle"><input type="color" id="colorInput" value="#ffffff"></div>
-            <span>צבע טקסט</span>
+            <span>צבע</span>
         </div>
         <div class="menu-item" onclick="changeBg()"><b>🎨</b><span>רקע</span></div>
         <div class="menu-item" onclick="deleteObj()" style="border-color: #551a1a;"><b>🗑️</b><span>מחק</span></div>
+        <div class="menu-item reset-btn" onclick="resetCanvas()"><b>🔄</b><span>איפוס</span></div>
         <div class="menu-item save-btn" onclick="shareImg()"><b>💾</b><span>שמור</span></div>
     </div>
 
@@ -152,41 +170,44 @@
                 <button class="tool-btn" onclick="redo()" id="redoBtn">↩️</button>
             </div>
             <div class="tool-group">
-                <button id="boldBtn" class="tool-btn active" onclick="updateSelectedWeight('bold')">מודגש</button>
-                <button id="regBtn" class="tool-btn" onclick="updateSelectedWeight('normal')">רגיל</button>
+                <button id="boldBtn" class="tool-btn" onclick="updateSelectedWeight('bold')" disabled>מודגש</button>
+                <button id="regBtn" class="tool-btn" onclick="updateSelectedWeight('normal')" disabled>רגיל</button>
             </div>
         </div>
-        
-        <div id="canvas-wrapper">
-            <canvas id="storyCanvas"></canvas>
-        </div>
+        <div id="canvas-wrapper"><canvas id="storyCanvas"></canvas></div>
     </div>
 
     <script>
+        // בדיקת מכשיר פעם אחת
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         const canvas = new fabric.Canvas('storyCanvas', { 
             width: 1080, height: 1920, 
-            backgroundColor: '#001f3f' // כחול כהה התחלתי
+            backgroundColor: '#001f3f',
+            selection: true,
+            preserveObjectStacking: true
         });
 
-        // הגבלת רקעים
-        const bgOptions = ['#001f3f', '#87CEEB']; // כחול כהה, תכלת
+        const bgOptions = ['#001f3f', '#87CEEB'];
         let bgIdx = 0;
 
+        // הגדרות עיצוב לנקודות השליטה
         fabric.Object.prototype.set({
             transparentCorners: false, cornerColor: '#ffffff', cornerStrokeColor: '#007bff',
-            cornerStyle: 'circle', cornerSize: isMobile ? 45 : 25, padding: 10, uniformScaling: true
+            cornerStyle: 'circle', cornerSize: isMobile ? 40 : 20, padding: 10,
+            borderScaleFactor: 2, borderDashArray: [5, 5]
         });
         fabric.Object.prototype.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
 
         let stateStack = [];
         let redoStack = [];
-        let isMoving = false;
+        let isProcessing = false;
         let activeTextObject = null;
 
+        // ניהול היסטוריה
         function saveState() {
-            if (isMoving) return;
-            stateStack.push(JSON.stringify(canvas.toJSON(['lineHeight', 'fontWeight', 'isIcon'])));
+            if (isProcessing) return;
+            stateStack.push(JSON.stringify(canvas.toJSON(['fontWeight', 'isIcon'])));
+            if (stateStack.length > 30) stateStack.shift(); // הגבלת זיכרון
             redoStack = [];
             updateButtons();
         }
@@ -197,32 +218,32 @@
         }
 
         function undo() {
-            if (stateStack.length <= 1) return;
+            if (stateStack.length <= 1 || isProcessing) return;
+            isProcessing = true;
             redoStack.push(stateStack.pop());
-            isMoving = true;
             canvas.loadFromJSON(stateStack[stateStack.length - 1], () => {
-                canvas.renderAll(); isMoving = false; updateButtons();
+                canvas.renderAll(); isProcessing = false; updateButtons(); checkTextSelection();
             });
         }
 
         function redo() {
-            if (redoStack.length === 0) return;
+            if (redoStack.length === 0 || isProcessing) return;
+            isProcessing = true;
             const next = redoStack.pop();
             stateStack.push(next);
-            isMoving = true;
             canvas.loadFromJSON(next, () => {
-                canvas.renderAll(); isMoving = false; updateButtons();
+                canvas.renderAll(); isProcessing = false; updateButtons(); checkTextSelection();
             });
         }
 
-        // עריכת טקסט
+        // עריכת טקסט - חלון חכם
         function openTextEditor(obj = null) {
             activeTextObject = obj;
             const overlay = document.getElementById('textEditorOverlay');
             const input = document.getElementById('textEditorInput');
             input.value = obj ? obj.text : "";
             overlay.style.display = 'flex';
-            setTimeout(() => input.focus(), 100);
+            setTimeout(() => input.focus(), 50);
         }
 
         function closeTextEditor(shouldSave) {
@@ -233,8 +254,8 @@
                 } else {
                     const text = new fabric.IText(val, {
                         left: 540, top: 960, fontFamily: 'FtMonopol', fontSize: 110, fill: 'white',
-                        textAlign: 'center', originX: 'center', originY: 'center', fontWeight: 'bold',
-                        lineHeight: 0.8, direction: 'rtl', editable: false
+                        textAlign: 'center', originX: 'center', originY: 'center', 
+                        fontWeight: 'bold', lineHeight: 0.9, direction: 'rtl', editable: false
                     });
                     text.on('mousedblclick', () => openTextEditor(text));
                     canvas.add(text); canvas.setActiveObject(text);
@@ -245,97 +266,131 @@
             activeTextObject = null;
         }
 
+        // סגירה עם Enter
+        document.getElementById('textEditorInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); closeTextEditor(true); }
+            if (e.key === 'Escape') { closeTextEditor(false); }
+        });
+
+        function checkTextSelection() {
+            const active = canvas.getActiveObject();
+            const b = document.getElementById('boldBtn'), r = document.getElementById('regBtn');
+            if (active && active.type === 'i-text' && !active.isIcon) {
+                b.disabled = r.disabled = false;
+                b.classList.toggle('active', active.fontWeight === 'bold');
+                r.classList.toggle('active', active.fontWeight === 'normal');
+            } else {
+                b.disabled = r.disabled = true;
+                b.classList.remove('active'); r.classList.remove('active');
+            }
+        }
+
+        canvas.on({
+            'selection:created': checkTextSelection,
+            'selection:updated': checkTextSelection,
+            'selection:cleared': checkTextSelection,
+            'object:modified': saveState
+        });
+
         function updateSelectedWeight(w) {
             const active = canvas.getActiveObject();
             if (active && active.type === 'i-text' && !active.isIcon) {
                 active.set('fontWeight', w);
-                canvas.renderAll(); saveState();
+                canvas.renderAll(); saveState(); checkTextSelection();
             }
         }
 
         document.getElementById('colorInput').oninput = function() {
             const active = canvas.getActiveObject();
-            // צבע משתנה רק אם זה טקסט ולא אייקון
             if (active && active.type === 'i-text' && !active.isIcon) {
-                active.set('fill', this.value);
-                canvas.renderAll();
+                active.set('fill', this.value); canvas.renderAll();
             }
         };
         document.getElementById('colorInput').onchange = saveState;
 
-        // אייקונים (צבע מקובע)
         function addIcon(type) {
-            const icons = { heart: '❤️' };
-            const text = new fabric.IText(icons[type], {
-                left: 540, top: 1100, fontSize: 150, originX: 'center', originY: 'center',
-                isIcon: true, selectable: true, editable: false
+            const text = new fabric.IText('❤️', {
+                left: 540, top: 1100, fontSize: 180, originX: 'center', originY: 'center',
+                isIcon: true, editable: false
             });
             canvas.add(text); canvas.setActiveObject(text); saveState();
         }
 
-        // ניהול תנועה מוגבלת במובייל / חסומה במחשב
-        let isDragging = false, lastPosX, lastPosY;
-        canvas.on('mouse:down', function(opt) {
+        document.getElementById('imageLoader').onchange = function(e) {
+            const reader = new FileReader();
+            reader.onload = (f) => {
+                fabric.Image.fromURL(f.target.result, (img) => {
+                    img.scaleToWidth(600); img.set({ left: 540, top: 1100, originX: 'center', originY: 'center' });
+                    canvas.add(img); canvas.setActiveObject(img); saveState();
+                });
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        };
+
+        function deleteObj() { 
+            const a = canvas.getActiveObject(); 
+            if(a) { canvas.remove(a); canvas.discardActiveObject(); saveState(); }
+        }
+
+        function resetCanvas() {
+            if (confirm("לאפס את כל העיצוב?")) {
+                canvas.getObjects().forEach(obj => canvas.remove(obj));
+                bgIdx = 0; canvas.setBackgroundColor(bgOptions[0], () => { canvas.renderAll(); saveState(); });
+            }
+        }
+
+        // ניהול תצוגה מותאם
+        function resetView() {
+            const wrapper = document.querySelector('.main-editor');
+            const scale = Math.min((wrapper.clientWidth-20)/1080, (wrapper.clientHeight-80)/1920);
+            canvas.setViewportTransform([scale, 0, 0, scale, (wrapper.clientWidth - 1080 * scale) / 2, (wrapper.clientHeight - 1920 * scale) / 2]);
+        }
+
+        // תנועה מוגבלת רק במובייל
+        let isDragging = false, lastX, lastY;
+        canvas.on('mouse:down', (opt) => {
             if (isMobile && !canvas.getActiveObject()) {
                 isDragging = true;
-                lastPosX = opt.e.touches ? opt.e.touches[0].clientX : opt.e.clientX;
-                lastPosY = opt.e.touches ? opt.e.touches[0].clientY : opt.e.clientY;
+                lastX = opt.e.touches ? opt.e.touches[0].clientX : opt.e.clientX;
+                lastY = opt.e.touches ? opt.e.touches[0].clientY : opt.e.clientY;
             }
         });
-
-        canvas.on('mouse:move', function(opt) {
-            if (isDragging && isMobile) {
+        canvas.on('mouse:move', (opt) => {
+            if (isDragging) {
                 const e = opt.e;
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                
-                let newX = canvas.viewportTransform[4] + (clientX - lastPosX);
-                let newY = canvas.viewportTransform[5] + (clientY - lastPosY);
-
-                // הגבלת תנועה "מעט מסביב" (טווח של 100 פיקסלים)
-                const limit = 100;
-                const wrapper = document.querySelector('.main-editor');
-                const baseScale = Math.min((wrapper.clientWidth-40)/1080, (wrapper.clientHeight-120)/1920);
-                const centerX = (wrapper.clientWidth - 1080 * baseScale) / 2;
-                const centerY = (wrapper.clientHeight - 1920 * baseScale) / 2;
-
-                if (Math.abs(newX - centerX) < limit) canvas.viewportTransform[4] = newX;
-                if (Math.abs(newY - centerY) < limit) canvas.viewportTransform[5] = newY;
-
+                const curX = e.touches ? e.touches[0].clientX : e.clientX;
+                const curY = e.touches ? e.touches[0].clientY : e.clientY;
+                canvas.viewportTransform[4] += (curX - lastX);
+                canvas.viewportTransform[5] += (curY - lastY);
                 canvas.requestRenderAll();
-                lastPosX = clientX; lastPosY = clientY;
+                lastX = curX; lastY = curY;
             }
         });
         canvas.on('mouse:up', () => isDragging = false);
-
-        function resetView() {
-            const wrapper = document.querySelector('.main-editor');
-            const scale = Math.min((wrapper.clientWidth-40)/1080, (wrapper.clientHeight-120)/1920);
-            canvas.setViewportTransform([scale, 0, 0, scale, (wrapper.clientWidth - 1080 * scale) / 2, (wrapper.clientHeight - 1920 * scale) / 2]);
-        }
 
         function changeBg() {
             bgIdx = (bgIdx + 1) % bgOptions.length;
             canvas.setBackgroundColor(bgOptions[bgIdx], () => { canvas.renderAll(); saveState(); });
         }
 
-        function deleteObj() { 
-            const a = canvas.getActiveObject(); 
-            if(a && a.selectable !== false) { canvas.remove(a); saveState(); }
-        }
-
         async function shareImg() {
+            const originalVpt = canvas.viewportTransform.slice();
             canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
             canvas.discardActiveObject().renderAll();
             const dataURL = canvas.toDataURL({ format: 'jpeg', quality: 0.95 });
-            resetView();
+            canvas.setViewportTransform(originalVpt);
+            
             const blob = await (await fetch(dataURL)).blob();
             const file = new File([blob], 'story.jpg', { type: 'image/jpeg' });
-            if (navigator.share) navigator.share({ files: [file] });
+            if (navigator.share && isMobile) navigator.share({ files: [file] });
             else { const l = document.createElement('a'); l.download = 'story.jpg'; l.href = dataURL; l.click(); }
         }
 
-        window.addEventListener('resize', resetView);
+        window.addEventListener('resize', () => {
+            document.documentElement.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
+            resetView();
+        });
+        
         document.fonts.ready.then(() => { resetView(); saveState(); });
     </script>
 </body>
