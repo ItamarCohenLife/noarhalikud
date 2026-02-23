@@ -3,208 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>יוצר סטורי - FtMonopol</title>
+    <title>Story Creator - FtMonopol</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
         @font-face {
             font-family: 'FtMonopol';
             src: url('FtMonopol-Bold.woff2') format('woff2');
             font-weight: bold;
-            font-style: normal;
+            font-display: swap;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'FtMonopol', sans-serif;
         }
 
         body {
-            font-family: 'FtMonopol', sans-serif;
-            background-color: #f4f4f9;
+            background-color: #0e0e0e;
+            color: white;
+            margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 15px;
-            margin: 0;
-            color: #333;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .editor-box {
-            background: white;
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        .toolbar {
+            background: #1a1a1a;
             width: 100%;
-            max-width: 500px;
-            box-sizing: border-box;
-            text-align: center;
-        }
-
-        h2 { color: #001f3f; margin-bottom: 15px; font-size: 24px; }
-
-        textarea {
-            width: 100%;
-            height: 150px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 15px;
-            font-size: 18px;
-            font-family: 'FtMonopol', sans-serif;
-            box-sizing: border-box;
-            margin-bottom: 15px;
-            outline: none;
-            resize: none;
-        }
-
-        .btn-group {
+            padding: 12px;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            z-index: 10;
+            border-bottom: 1px solid #333;
         }
 
-        button {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 12px;
-            font-family: 'FtMonopol', sans-serif;
-            font-size: 18px;
-            font-weight: bold;
+        button, .file-label {
+            background: #262626;
+            color: white;
+            border: 1px solid #444;
+            padding: 10px 15px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: transform 0.1s;
+            font-size: 14px;
+            font-weight: bold;
+            transition: 0.2s;
         }
 
-        button:active { transform: scale(0.98); }
+        button:hover { background: #333; }
+        .btn-add { background: #007bff; border: none; }
+        .btn-save { background: #28a745; border: none; }
+        .btn-delete { background: #c0392b; border: none; }
 
-        #generateBtn { background-color: #001f3f; color: white; }
-        #downloadBtn { background-color: #28a745; color: white; display: none; }
-        #shareBtn { background-color: #25d366; color: white; display: none; } /* צבע וואטסאפ */
-
-        #storyCanvas {
-            margin-top: 20px;
-            max-width: 100%;
-            height: auto;
-            border-radius: 15px;
-            display: none;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        #editor-wrapper {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 20px;
         }
+
+        .canvas-container {
+            box-shadow: 0 0 40px rgba(0,0,0,0.6);
+        }
+
+        input[type="file"] { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="editor-box">
-        <h2>מחולל סטורי</h2>
-        <textarea id="userInput" placeholder="הקלד את המסר שלך כאן..."></textarea>
-        
-        <div class="btn-group">
-            <button id="generateBtn">צור תמונה</button>
-            <button id="shareBtn">שתף קובץ לוואטסאפ</button>
-            <button id="downloadBtn">שמור לגלריה</button>
-        </div>
+    <div class="toolbar">
+        <button class="btn-add" onclick="addText()">➕ טקסט</button>
+        <label class="file-label">
+            🖼️ הוסף תמונה
+            <input type="file" id="imageLoader" accept="image/*">
+        </label>
+        <button onclick="changeBgColor()">🎨 צבע רקע</button>
+        <button class="btn-delete" onclick="deleteObject()">🗑️ מחק פריט</button>
+        <button class="btn-save" onclick="downloadImage()">💾 שמור PNG</button>
+        <button class="btn-save" style="background:#25d366" onclick="shareImage()">📱 שתף</button>
     </div>
 
-    <canvas id="storyCanvas" width="1080" height="1920"></canvas>
+    <div id="editor-wrapper">
+        <canvas id="storyCanvas"></canvas>
+    </div>
 
     <script>
-        const canvas = document.getElementById('storyCanvas');
-        const ctx = canvas.getContext('2d');
-        const userInput = document.getElementById('userInput');
-        const generateBtn = document.getElementById('generateBtn');
-        const shareBtn = document.getElementById('shareBtn');
-        const downloadBtn = document.getElementById('downloadBtn');
+        // אתחול קנבס ברזולוציית סטורי (1080x1920)
+        const canvas = new fabric.Canvas('storyCanvas', {
+            width: 1080,
+            height: 1920,
+            backgroundColor: '#001f3f',
+            preserveObjectStacking: true // שומר על סדר השכבות
+        });
 
-        function loadImage(src) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = reject;
-                img.src = src;
+        // רספונסיביות למחשב ולמובייל
+        function resizeCanvas() {
+            const wrapper = document.getElementById('editor-wrapper');
+            const scale = Math.min(
+                (wrapper.clientWidth - 20) / 1080,
+                (wrapper.clientHeight - 20) / 1920
+            );
+            canvas.setZoom(scale);
+            canvas.setWidth(1080 * scale);
+            canvas.setHeight(1920 * scale);
+        }
+
+        // טעינת הלוגו באופן קבוע
+        function loadLogo() {
+            fabric.Image.fromURL('logo.png', function(img) {
+                const logoWidth = 350; // ניתן לשנות את הגודל כאן
+                img.set({
+                    left: 540,
+                    top: 180,
+                    originX: 'center',
+                    originY: 'center',
+                    selectable: false, // המשתמש לא יכול להזיז אותו
+                    evented: false,   // המשתמש לא יכול לבחור אותו
+                    opacity: 1
+                });
+                img.scaleToWidth(logoWidth);
+                canvas.add(img);
+                canvas.sendToBack(img); // מבטיח שהלוגו לא יסתיר תפריטים אם יש כאלו
+                canvas.renderAll();
+            }, { crossOrigin: 'anonymous' });
+        }
+
+        // הפעלה ראשונית
+        window.addEventListener('resize', resizeCanvas);
+        document.fonts.ready.then(() => {
+            resizeCanvas();
+            loadLogo(); // טעינת הלוגו מיד עם העלייה
+        });
+
+        // הוספת טקסט בפונט המבוקש
+        function addText() {
+            const text = new fabric.IText('הקלד כאן...', {
+                left: 540,
+                top: 960,
+                fontFamily: 'FtMonopol',
+                fill: '#ffffff',
+                fontSize: 90,
+                textAlign: 'center',
+                originX: 'center',
+                originY: 'center',
+                direction: 'rtl'
+            });
+            canvas.add(text);
+            canvas.setActiveObject(text);
+        }
+
+        // הוספת תמונה מהמכשיר
+        document.getElementById('imageLoader').onchange = function (e) {
+            const reader = new FileReader();
+            reader.onload = function (f) {
+                const data = f.target.result;
+                fabric.Image.fromURL(data, function (img) {
+                    img.scaleToWidth(600);
+                    img.set({ left: 540, top: 1100, originX: 'center', originY: 'center' });
+                    canvas.add(img);
+                    // מוודא שהלוגו תמיד נשאר למעלה מבחינת סדר שכבות אם צריך
+                    canvas.renderAll();
+                });
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        };
+
+        // שינוי צבע רקע
+        const bgColors = ['#001f3f', '#000000', '#1c1c1c', '#ffffff', '#ff4136'];
+        let currentBgIdx = 0;
+        function changeBgColor() {
+            currentBgIdx = (currentBgIdx + 1) % bgColors.length;
+            canvas.setBackgroundColor(bgColors[currentBgIdx], canvas.renderAll.bind(canvas));
+        }
+
+        function deleteObject() {
+            const active = canvas.getActiveObject();
+            if (active) canvas.remove(active);
+        }
+
+        function prepareExport() {
+            canvas.setZoom(1);
+            canvas.setWidth(1080);
+            canvas.setHeight(1920);
+        }
+
+        function downloadImage() {
+            prepareExport();
+            const link = document.createElement('a');
+            link.download = 'ft-monopol-story.png';
+            link.href = canvas.toDataURL({ format: 'png', quality: 1 });
+            link.click();
+            resizeCanvas();
+        }
+
+        async function shareImage() {
+            prepareExport();
+            canvas.getElement().toBlob(async (blob) => {
+                const file = new File([blob], 'story.png', { type: 'image/png' });
+                if (navigator.share) {
+                    try { await navigator.share({ files: [file] }); } catch (e) {}
+                } else { alert("הדפדפן לא תומך בשיתוף."); }
+                resizeCanvas();
             });
         }
-
-        async function draw() {
-            const text = userInput.value.trim();
-            if (!text) return;
-
-            try {
-                await document.fonts.load('10pt "FtMonopol"');
-                const logo = await loadImage('logo.png');
-
-                ctx.fillStyle = '#001f3f';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                const logoWidth = 250;
-                const logoHeight = (logo.height / logo.width) * logoWidth;
-                ctx.drawImage(logo, (canvas.width / 2) - (logoWidth / 2), 150, logoWidth, logoHeight);
-
-                ctx.direction = 'rtl';
-                ctx.fillStyle = 'white';
-                ctx.font = '85px "FtMonopol"';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
-                const maxWidth = 900;
-                const lineHeight = 110;
-                const paragraphs = text.split('\n');
-                let allLines = [];
-
-                paragraphs.forEach(para => {
-                    const words = para.split(' ');
-                    let currentLine = '';
-                    for (let n = 0; n < words.length; n++) {
-                        let testLine = currentLine + (currentLine === '' ? '' : ' ') + words[n];
-                        if (ctx.measureText(testLine).width > maxWidth && n > 0) {
-                            allLines.push(currentLine);
-                            currentLine = words[n];
-                        } else {
-                            currentLine = testLine;
-                        }
-                    }
-                    allLines.push(currentLine);
-                });
-
-                const totalTextHeight = allLines.length * lineHeight;
-                let y = (canvas.height / 2) - (totalTextHeight / 2) + (lineHeight / 2) + 50;
-
-                allLines.forEach(line => {
-                    ctx.fillText(line, canvas.width / 2, y);
-                    y += lineHeight;
-                });
-
-                canvas.style.display = 'block';
-                downloadBtn.style.display = 'block';
-                shareBtn.style.display = 'block'; // מציג את כפתור השיתוף
-                canvas.scrollIntoView({ behavior: 'smooth' });
-
-            } catch (err) {
-                alert("שגיאה בטעינת הקבצים");
-            }
-        }
-
-        // פונקציית השיתוף כקובץ
-        async function shareImage() {
-            if (!navigator.share) {
-                alert("הדפדפן שלך לא תומך בשיתוף ישיר. השתמש בכפתור השמירה.");
-                return;
-            }
-
-            canvas.toBlob(async (blob) => {
-                const file = new File([blob], 'story.png', { type: 'image/png' });
-                try {
-                    await navigator.share({
-                        files: [file],
-                        title: 'הסטורי שלי',
-                        text: 'נוצר ב-FtMonopol'
-                    });
-                } catch (err) {
-                    console.log("השיתוף בוטל או נכשל");
-                }
-            }, 'image/png');
-        }
-
-        generateBtn.addEventListener('click', draw);
-        shareBtn.addEventListener('click', shareImage);
-        
-        downloadBtn.addEventListener('click', () => {
-            const link = document.createElement('a');
-            link.download = 'story.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        });
     </script>
 </body>
 </html>
