@@ -7,8 +7,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
         /* טעינת פונטים */
-        @font-face { font-family: 'FtMonopol'; src: url('FtMonopol-Bold.woff2') format('woff2'); font-weight: bold; }
-        @font-face { font-family: 'FtMonopol'; src: url('FtMonopol-Regular.woff2') format('woff2'); font-weight: normal; }
+        @font-face { font-family: 'FbMonopolyHeb'; src: url('FbMonopolyHeb-Bold.otf') format('opentype'); font-weight: bold; }
+        @font-face { font-family: 'FbMonopolyHeb'; src: url('FbMonopolyHeb-Regular.otf') format('opentype'); font-weight: normal; }
 
         :root { 
             --vh: 1vh; --accent: #007bff; --bg: #050505; --panel: #1a1a1a; 
@@ -16,7 +16,7 @@
         }
 
         * { 
-            box-sizing: border-box; font-family: 'FtMonopol', sans-serif; 
+            box-sizing: border-box; font-family: 'FbMonopolyHeb', sans-serif; 
             -webkit-tap-highlight-color: transparent; margin: 0; padding: 0;
             user-select: none; touch-action: none; 
         }
@@ -83,7 +83,7 @@
         #textEditorInput {
             width: 100%; flex: 1; background: transparent; border: none;
             color: white; font-size: 32px; text-align: center; outline: none;
-            direction: rtl; font-family: 'FtMonopol', sans-serif; resize: none;
+            direction: rtl; font-family: 'FbMonopolyHeb', sans-serif; resize: none;
         }
         .btn-done {
             background: var(--accent); color: white; width: 100%; padding: 18px;
@@ -163,7 +163,7 @@
 
         fabric.Object.prototype.set({
             transparentCorners: false, cornerColor: '#007bff', cornerStrokeColor: '#ffffff',
-            cornerStyle: 'circle', cornerSize: 45, padding: 10
+            cornerStyle: 'circle', cornerSize: 28, padding: 10
         });
 
         function loadLogo() {
@@ -223,7 +223,7 @@
                     currentEditingObj.setCoords();
                 } else {
                     const t = new fabric.Textbox(val, {
-                        left: 540, top: 960, width: 920, fontFamily: 'FtMonopol', fontSize: 100, fill: 'white',
+                        left: 540, top: 960, width: 920, fontFamily: 'FbMonopolyHeb', fontSize: 100, fill: 'white',
                         textAlign: 'center', originX: 'center', originY: 'center', fontWeight: 'bold', direction: 'rtl', editable: false
                     });
                     t.on('mousedblclick', () => openTextEditor(t));
