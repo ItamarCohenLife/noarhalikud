@@ -30,7 +30,6 @@
             flex-direction: column;
         }
 
-        /* סרגל עליון עם הלוגו הקודם */
         .app-bar {
             height: 60px;
             background: var(--panel);
@@ -43,16 +42,10 @@
             z-index: 100;
         }
 
-        .logo-area {
-            display: flex;
-            flex-direction: column;
-            line-height: 1;
-        }
-
+        .logo-area { display: flex; flex-direction: column; line-height: 1; }
         .logo-top { font-weight: bold; font-size: 18px; color: var(--accent); }
         .logo-bottom { font-size: 12px; opacity: 0.7; font-weight: normal; letter-spacing: 1px; }
 
-        /* אזור עריכה */
         .editor-container {
             flex-grow: 1;
             position: relative;
@@ -203,7 +196,7 @@
             width: 1080, height: 1920, backgroundColor: '#001f3f'
         });
 
-        const bgOptions = ['#001f3f', '#87CEEB'];
+        const bgOptions = ['#001f3f', '#87CEEB', '#1a1a1a', '#27ae60'];
         let bgIdx = 0, history = [];
 
         fabric.Object.prototype.set({
@@ -228,34 +221,57 @@
 
         function openTextEditor(obj = null) {
             currentEditingObj = obj;
-            textInput.value = obj ? obj.text : "";
+            textInput.value = (obj && obj.text) ? obj.text : "";
             overlay.style.display = 'flex';
-            setTimeout(() => { textInput.focus(); }, 100);
+            setTimeout(() => { 
+                textInput.focus();
+                // מציב את הסמן בסוף הטקסט
+                textInput.setSelectionRange(textInput.value.length, textInput.value.length);
+            }, 100);
         }
 
-        function handleDone(e) {
-            if(e) e.preventDefault();
+        // פונקציית הסיום המתוקנת
+        function handleDone() {
             const val = textInput.value.trim();
-            if (val) {
+            if (val !== "") {
                 if (currentEditingObj) {
                     currentEditingObj.set('text', val);
                 } else {
                     const t = new fabric.IText(val, {
                         left: 540, top: 960, fontFamily: 'FtMonopol', fontSize: 110, fill: 'white',
-                        textAlign: 'center', originX: 'center', fontWeight: 'bold', direction: 'rtl', editable: false
+                        textAlign: 'center', originX: 'center', originY: 'center', fontWeight: 'bold', direction: 'rtl', editable: false
                     });
                     t.on('mousedblclick', () => openTextEditor(t));
-                    canvas.add(t); canvas.setActiveObject(t);
+                    canvas.add(t); 
+                    canvas.setActiveObject(t);
                 }
                 canvas.renderAll();
                 saveState();
+            } else if (currentEditingObj) {
+                canvas.remove(currentEditingObj);
+                canvas.discardActiveObject();
+                canvas.renderAll();
+                saveState();
             }
+            
+            // סגירה ואיפוס
             overlay.style.display = 'none';
+            textInput.value = "";
             currentEditingObj = null;
         }
 
-        btnDone.addEventListener('click', handleDone);
-        textInput.addEventListener('keydown', (e) => { if(e.key === 'Enter' && !e.shiftKey) handleDone(e); });
+        // הצמדת אירועים לכפתור ולמקלדת
+        btnDone.onclick = (e) => {
+            e.preventDefault();
+            handleDone();
+        };
+
+        textInput.onkeydown = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleDone();
+            }
+        };
 
         canvas.on('selection:created', updateUI);
         canvas.on('selection:updated', updateUI);
@@ -264,8 +280,9 @@
             document.getElementById('boldBtn').disabled = true;
         });
 
-        function updateUI(e) {
-            const obj = e.target;
+        function updateUI() {
+            const obj = canvas.getActiveObject();
+            if(!obj) return;
             const menu = document.getElementById('floatingMenu');
             const rect = obj.getBoundingRect();
             menu.style.display = 'flex';
@@ -285,22 +302,29 @@
         document.getElementById('colorInput').oninput = function() {
             const obj = canvas.getActiveObject();
             document.getElementById('colorDisplay').style.backgroundColor = this.value;
-            if (obj && obj.type === 'i-text' && !obj.isIcon) {
-                obj.set('fill', this.value); canvas.renderAll();
+            if (obj) {
+                if (obj.type === 'i-text' && !obj.isIcon) {
+                    obj.set('fill', this.value); 
+                } else if (obj.type === 'path' || obj.type === 'group') {
+                    obj.set('fill', this.value);
+                }
+                canvas.renderAll();
+                saveState();
             }
         };
 
         function addIcon() {
-            const heart = new fabric.IText('❤️', { left: 540, top: 1100, fontSize: 180, originX: 'center', isIcon: true, editable: false });
+            const heart = new fabric.IText('❤️', { left: 540, top: 1100, fontSize: 180, originX: 'center', originY: 'center', isIcon: true, editable: false });
             canvas.add(heart); canvas.setActiveObject(heart); saveState();
         }
 
         document.getElementById('imageLoader').onchange = function(e) {
+            if(!e.target.files[0]) return;
             const reader = new FileReader();
             reader.onload = (f) => {
                 fabric.Image.fromURL(f.target.result, (img) => {
-                    img.scaleToWidth(600); img.set({ left: 540, top: 1100, originX: 'center' });
-                    canvas.add(img); canvas.sendToBack(img); canvas.setActiveObject(img); saveState();
+                    img.scaleToWidth(600); img.set({ left: 540, top: 1100, originX: 'center', originY: 'center' });
+                    canvas.add(img); canvas.setActiveObject(img); saveState();
                 });
             };
             reader.readAsDataURL(e.target.files[0]);
@@ -316,7 +340,7 @@
             if (obj) obj.clone((cloned) => {
                 cloned.set({ left: obj.left + 50, top: obj.top + 50 });
                 canvas.add(cloned); canvas.setActiveObject(cloned); saveState();
-            });
+            }, ['isIcon', 'fontWeight', 'direction']);
         };
 
         document.getElementById('btnDelete').onclick = function() {
@@ -326,13 +350,14 @@
 
         function resetCanvas() {
             if (confirm("לאפס את כל העיצוב?")) {
-                canvas.clear(); bgIdx = 0;
+                canvas.getObjects().forEach(o => canvas.remove(o));
+                bgIdx = 0;
                 canvas.setBackgroundColor(bgOptions[0], () => { canvas.renderAll(); saveState(); });
             }
         }
 
         function saveState() { 
-            history.push(JSON.stringify(canvas.toJSON(['fontWeight', 'isIcon']))); 
+            history.push(JSON.stringify(canvas.toJSON(['fontWeight', 'isIcon', 'direction']))); 
             if(history.length > 30) history.shift(); 
         }
 
