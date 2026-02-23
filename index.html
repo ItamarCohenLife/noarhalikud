@@ -3,215 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Story Creator - FtMonopol</title>
+    <title>Creator Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
         @font-face {
             font-family: 'FtMonopol';
             src: url('FtMonopol-Bold.woff2') format('woff2');
             font-weight: bold;
-            font-display: swap;
         }
 
-        * {
-            box-sizing: border-box;
-            font-family: 'FtMonopol', sans-serif;
-        }
+        * { box-sizing: border-box; font-family: 'FtMonopol', sans-serif; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background-color: #0e0e0e;
-            color: white;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
+            background-color: #000; color: white; margin: 0;
+            display: flex; height: 100vh; width: 100vw; overflow: hidden;
         }
 
-        .toolbar {
-            background: #1a1a1a;
-            width: 100%;
-            padding: 12px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px;
-            z-index: 10;
-            border-bottom: 1px solid #333;
+        /* תפריט צד */
+        .side-menu {
+            width: 75px; background: #111; display: flex; flex-direction: column;
+            align-items: center; padding: 15px 0; gap: 12px; border-left: 1px solid #333; z-index: 20;
         }
 
-        button, .file-label {
-            background: #262626;
-            color: white;
-            border: 1px solid #444;
-            padding: 10px 15px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            transition: 0.2s;
+        .menu-item {
+            background: #222; border: 1px solid #444; color: white;
+            width: 55px; height: 55px; border-radius: 15px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 18px; cursor: pointer; transition: 0.2s;
         }
 
-        button:hover { background: #333; }
-        .btn-add { background: #007bff; border: none; }
-        .btn-save { background: #28a745; border: none; }
-        .btn-delete { background: #c0392b; border: none; }
+        .menu-item span { font-size: 10px; margin-top: 2px; }
+        .menu-item:active { background: #444; transform: scale(0.9); }
 
-        #editor-wrapper {
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            padding: 20px;
+        /* בורר צבעים */
+        .color-picker-wrapper {
+            position: relative; width: 40px; height: 40px; 
+            border-radius: 50%; border: 2px solid white; overflow: hidden;
+        }
+        #colorPicker {
+            position: absolute; top: -5px; left: -5px; width: 50px; height: 50px; cursor: pointer;
         }
 
-        .canvas-container {
-            box-shadow: 0 0 40px rgba(0,0,0,0.6);
+        /* אזור עריכה */
+        .main-editor { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #050505; padding: 10px; }
+        #canvas-wrapper { box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+
+        /* ספריית אייקונים (מגירה) */
+        .icon-library {
+            position: fixed; bottom: -300px; left: 0; width: 100%; height: 250px;
+            background: #1a1a1a; border-top: 2px solid #333; transition: 0.3s;
+            display: grid; grid-template-columns: repeat(4, 1fr); overflow-y: auto; padding: 20px; gap: 15px; z-index: 30;
         }
+        .icon-library.open { bottom: 0; }
+        .icon-item { font-size: 40px; background: #333; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; padding: 10px; }
+
+        /* פופ-אפ טקסט */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal textarea {
+            width: 100%; height: 120px; background: #222; color: white; border: 2px solid #007bff;
+            border-radius: 15px; padding: 15px; font-size: 24px; text-align: center;
+        }
+        .modal-btns { display: flex; gap: 10px; width: 100%; margin-top: 15px; }
+        .modal-btns button { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: bold; font-size: 18px; }
 
         input[type="file"] { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="toolbar">
-        <button class="btn-add" onclick="addText()">➕ טקסט</button>
-        <label class="file-label">
-            🖼️ הוסף תמונה
-            <input type="file" id="imageLoader" accept="image/*">
-        </label>
-        <button onclick="changeBgColor()">🎨 צבע רקע</button>
-        <button class="btn-delete" onclick="deleteObject()">🗑️ מחק פריט</button>
-        <button class="btn-save" onclick="downloadImage()">💾 שמור PNG</button>
-        <button class="btn-save" style="background:#25d366" onclick="shareImage()">📱 שתף</button>
+    <div class="side-menu">
+        <div class="menu-item" onclick="openTextModal()"><b>T</b><span>טקסט</span></div>
+        <div class="menu-item" onclick="toggleIcons()">⭐<span>אייקון</span></div>
+        <label class="menu-item">🖼️<span>תמונה</span><input type="file" id="imageLoader" accept="image/*"></label>
+        
+        <div class="color-picker-wrapper" title="שנה צבע">
+            <input type="color" id="colorPicker" value="#ffffff">
+        </div>
+
+        <div class="menu-item" onclick="changeBg()">🎨<span>רקע</span></div>
+        <div class="menu-item" onclick="deleteObj()" style="border-color: #c0392b;">🗑️</div>
+        <div class="menu-item" onclick="shareImg()" style="background: #25d366; border:none; margin-top: auto;">💾</div>
     </div>
 
-    <div id="editor-wrapper">
-        <canvas id="storyCanvas"></canvas>
+    <div class="main-editor">
+        <div id="canvas-wrapper"><canvas id="storyCanvas"></canvas></div>
+    </div>
+
+    <div id="iconLibrary" class="icon-library">
+        <div class="icon-item" onclick="addIcon('heart')">❤️</div>
+        <div class="icon-item" onclick="addIcon('star')">⭐</div>
+        <div class="icon-item" onclick="addIcon('fire')">🔥</div>
+        <div class="icon-item" onclick="addIcon('check')">✅</div>
+        <div class="icon-item" onclick="addIcon('thumbsup')">👍</div>
+        <div class="icon-item" onclick="addIcon('location')">📍</div>
+        <div class="icon-item" onclick="addIcon('crown')">👑</div>
+        <div class="icon-item" onclick="addIcon('zap')">⚡</div>
+    </div>
+
+    <div id="textModal" class="modal">
+        <textarea id="modalInput"></textarea>
+        <div class="modal-btns">
+            <button onclick="closeModal()" style="background:#444; color:white;">ביטול</button>
+            <button onclick="saveTextFromModal()" style="background:#007bff; color:white;">אישור</button>
+        </div>
     </div>
 
     <script>
-        // אתחול קנבס ברזולוציית סטורי (1080x1920)
-        const canvas = new fabric.Canvas('storyCanvas', {
-            width: 1080,
-            height: 1920,
-            backgroundColor: '#001f3f',
-            preserveObjectStacking: true // שומר על סדר השכבות
-        });
+        const canvas = new fabric.Canvas('storyCanvas', { width: 1080, height: 1920, backgroundColor: '#001f3f' });
+        let currentEditingText = null;
 
-        // רספונסיביות למחשב ולמובייל
-        function resizeCanvas() {
-            const wrapper = document.getElementById('editor-wrapper');
-            const scale = Math.min(
-                (wrapper.clientWidth - 20) / 1080,
-                (wrapper.clientHeight - 20) / 1920
-            );
-            canvas.setZoom(scale);
-            canvas.setWidth(1080 * scale);
-            canvas.setHeight(1920 * scale);
+        function fitCanvas() {
+            const wrapper = document.querySelector('.main-editor');
+            const scale = Math.min((wrapper.clientWidth-20)/1080, (wrapper.clientHeight-20)/1920);
+            canvas.setZoom(scale); canvas.setWidth(1080 * scale); canvas.setHeight(1920 * scale);
         }
 
-        // טעינת הלוגו באופן קבוע
         function loadLogo() {
             fabric.Image.fromURL('logo.png', function(img) {
-                const logoWidth = 350; // ניתן לשנות את הגודל כאן
-                img.set({
-                    left: 540,
-                    top: 180,
-                    originX: 'center',
-                    originY: 'center',
-                    selectable: false, // המשתמש לא יכול להזיז אותו
-                    evented: false,   // המשתמש לא יכול לבחור אותו
-                    opacity: 1
-                });
-                img.scaleToWidth(logoWidth);
-                canvas.add(img);
-                canvas.sendToBack(img); // מבטיח שהלוגו לא יסתיר תפריטים אם יש כאלו
-                canvas.renderAll();
-            }, { crossOrigin: 'anonymous' });
-        }
-
-        // הפעלה ראשונית
-        window.addEventListener('resize', resizeCanvas);
-        document.fonts.ready.then(() => {
-            resizeCanvas();
-            loadLogo(); // טעינת הלוגו מיד עם העלייה
-        });
-
-        // הוספת טקסט בפונט המבוקש
-        function addText() {
-            const text = new fabric.IText('הקלד כאן...', {
-                left: 540,
-                top: 960,
-                fontFamily: 'FtMonopol',
-                fill: '#ffffff',
-                fontSize: 90,
-                textAlign: 'center',
-                originX: 'center',
-                originY: 'center',
-                direction: 'rtl'
+                img.set({ left: 540, top: 180, originX: 'center', selectable: false, evented: false });
+                img.scaleToWidth(350); canvas.add(img); canvas.renderAll();
             });
-            canvas.add(text);
-            canvas.setActiveObject(text);
         }
 
-        // הוספת תמונה מהמכשיר
-        document.getElementById('imageLoader').onchange = function (e) {
+        // שינוי צבע לאובייקט נבחר (טקסט או אייקון SVG)
+        document.getElementById('colorPicker').oninput = function() {
+            const active = canvas.getActiveObject();
+            if (active) {
+                if (active.type === 'i-text' || active.type === 'text') {
+                    active.set('fill', this.value);
+                } else if (active.type === 'path' || active.type === 'group') {
+                    // שינוי צבע לאייקון SVG
+                    if (active.getObjects) {
+                        active.getObjects().forEach(obj => obj.set('fill', this.value));
+                    } else {
+                        active.set('fill', this.value);
+                    }
+                }
+                canvas.renderAll();
+            }
+        };
+
+        // הוספת אייקונים (SVG מאפשר שינוי צבע)
+        const svgs = {
+            heart: 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z',
+            star: 'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z',
+            fire: 'M13.5,0.67c0,0-2.34,5.15-5.32,6.31C6,7.7,4.3,10.7,4.3,12.61c0,3.34,2.72,6.06,6.06,6.06c3.34,0,6.06-2.72,6.06-6.06 c0-3.13-2.54-5.67-5.67-5.67',
+            check: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z',
+            crown: 'M5 16h14a2 2 0 0 0 2-2V5l-5 4-4-4-4 4-5-4v9a2 2 0 0 0 2 2z',
+            zap: 'M7 2v11h3v9l7-12h-4l4-8z'
+        };
+
+        function addIcon(name) {
+            const path = new fabric.Path(svgs[name] || svgs.heart);
+            path.set({
+                left: 540, top: 1000, scaleX: 4, scaleY: 4,
+                fill: '#ffffff', originX: 'center', originY: 'center'
+            });
+            canvas.add(path);
+            canvas.setActiveObject(path);
+            toggleIcons(); // סגירת המגירה
+        }
+
+        function toggleIcons() {
+            document.getElementById('iconLibrary').classList.toggle('open');
+        }
+
+        // ניהול טקסט
+        function openTextModal(existing = null) {
+            currentEditingText = existing;
+            document.getElementById('modalInput').value = existing ? existing.text : '';
+            document.getElementById('textModal').style.display = 'flex';
+            setTimeout(() => document.getElementById('modalInput').focus(), 100);
+        }
+
+        function closeModal() { document.getElementById('textModal').style.display = 'none'; }
+
+        function saveTextFromModal() {
+            const val = document.getElementById('modalInput').value;
+            if (!val) { closeModal(); return; }
+            if (currentEditingText) {
+                currentEditingText.set('text', val);
+            } else {
+                const text = new fabric.IText(val, {
+                    left: 540, top: 960, fontFamily: 'FtMonopol', fill: 'white',
+                    fontSize: 100, textAlign: 'center', originX: 'center', direction: 'rtl'
+                });
+                text.on('mousedblclick', () => openTextModal(text));
+                canvas.add(text);
+                canvas.setActiveObject(text);
+            }
+            canvas.renderAll(); closeModal();
+        }
+
+        // רקע ותמונה
+        const bgs = ['#001f3f', '#000', '#fff', '#c0392b', '#16a085'];
+        let bIdx = 0;
+        function changeBg() { bIdx = (bIdx+1)%bgs.length; canvas.setBackgroundColor(bgs[bIdx], canvas.renderAll.bind(canvas)); }
+
+        document.getElementById('imageLoader').onchange = function(e) {
             const reader = new FileReader();
-            reader.onload = function (f) {
-                const data = f.target.result;
-                fabric.Image.fromURL(data, function (img) {
-                    img.scaleToWidth(600);
-                    img.set({ left: 540, top: 1100, originX: 'center', originY: 'center' });
-                    canvas.add(img);
-                    // מוודא שהלוגו תמיד נשאר למעלה מבחינת סדר שכבות אם צריך
-                    canvas.renderAll();
+            reader.onload = function(f) {
+                fabric.Image.fromURL(f.target.result, function(img) {
+                    img.scaleToWidth(600); img.set({ left: 540, top: 1100, originX: 'center', originY: 'center' });
+                    canvas.add(img); canvas.setActiveObject(img);
                 });
             };
             reader.readAsDataURL(e.target.files[0]);
         };
 
-        // שינוי צבע רקע
-        const bgColors = ['#001f3f', '#000000', '#1c1c1c', '#ffffff', '#ff4136'];
-        let currentBgIdx = 0;
-        function changeBgColor() {
-            currentBgIdx = (currentBgIdx + 1) % bgColors.length;
-            canvas.setBackgroundColor(bgColors[currentBgIdx], canvas.renderAll.bind(canvas));
-        }
+        function deleteObj() { const a = canvas.getActiveObject(); if(a && a.selectable !== false) canvas.remove(a); }
 
-        function deleteObject() {
-            const active = canvas.getActiveObject();
-            if (active) canvas.remove(active);
-        }
-
-        function prepareExport() {
-            canvas.setZoom(1);
-            canvas.setWidth(1080);
-            canvas.setHeight(1920);
-        }
-
-        function downloadImage() {
-            prepareExport();
-            const link = document.createElement('a');
-            link.download = 'ft-monopol-story.png';
-            link.href = canvas.toDataURL({ format: 'png', quality: 1 });
-            link.click();
-            resizeCanvas();
-        }
-
-        async function shareImage() {
-            prepareExport();
+        async function shareImg() {
+            canvas.setZoom(1); canvas.setWidth(1080); canvas.setHeight(1920);
             canvas.getElement().toBlob(async (blob) => {
-                const file = new File([blob], 'story.png', { type: 'image/png' });
-                if (navigator.share) {
-                    try { await navigator.share({ files: [file] }); } catch (e) {}
-                } else { alert("הדפדפן לא תומך בשיתוף."); }
-                resizeCanvas();
+                const file = new File([blob], 'ft-story.png', { type: 'image/png' });
+                if (navigator.share) await navigator.share({ files: [file] });
+                else { const l = document.createElement('a'); l.download = 'story.png'; l.href = canvas.toDataURL(); l.click(); }
+                fitCanvas();
             });
         }
+
+        window.addEventListener('resize', fitCanvas);
+        document.fonts.ready.then(() => { fitCanvas(); loadLogo(); });
     </script>
 </body>
 </html>
