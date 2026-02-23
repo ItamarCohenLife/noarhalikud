@@ -37,7 +37,6 @@
             position: fixed;
         }
 
-        /* תפריט צד */
         .side-menu {
             width: 90px;
             background: #111;
@@ -71,7 +70,6 @@
 
         .save-btn { background: #333 !important; border: 1px solid #555 !important; margin-top: auto; height: 80px; }
 
-        /* סרגל עליון */
         .top-tools {
             position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
             display: flex; gap: 8px; z-index: 50; align-items: center;
@@ -86,7 +84,7 @@
             font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 5px;
         }
 
-        /* חלון עריכת טקסט צף (מניעת בעיות מקלדת מובייל) */
+        /* חלון עריכת טקסט */
         #textEditorOverlay {
             display: none;
             position: fixed;
@@ -100,34 +98,27 @@
         }
 
         #textEditorInput {
-            width: 100%;
-            max-width: 500px;
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 32px;
-            text-align: center;
-            outline: none;
-            direction: rtl;
-            line-height: 1.2;
-            margin-bottom: 30px;
+            width: 100%; max-width: 500px; background: transparent; border: none;
+            color: white; font-size: 32px; text-align: center; outline: none;
+            direction: rtl; line-height: 1.2; margin-bottom: 30px;
         }
 
         .editor-btns { display: flex; gap: 15px; width: 100%; max-width: 400px; }
-        .editor-btns button { flex: 1; padding: 15px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; }
+        .editor-btns button { flex: 1; padding: 15px; border-radius: 50px; border: none; font-weight: bold; }
 
         .main-editor {
             flex-grow: 1; display: flex; flex-direction: column;
             align-items: center; justify-content: center; background: #050505; position: relative;
         }
 
-        #canvas-wrapper { box-shadow: 0 0 50px rgba(0,0,0,1); cursor: grab; }
+        #canvas-wrapper { 
+            box-shadow: 0 0 30px rgba(255,255,255,0.05); 
+            border: 2px solid #222; /* מסגרת ברורה לסטורי */
+            overflow: hidden;
+        }
 
-        .zoom-info { position: absolute; bottom: 20px; left: 20px; font-size: 12px; color: #666; pointer-events: none; }
-
-        input[type="color"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
         .color-circle { position: relative; width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; background: linear-gradient(45deg, red, blue, green); }
-
+        input[type="color"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
         input[type="file"] { display: none; }
     </style>
 </head>
@@ -143,15 +134,14 @@
 
     <div class="side-menu">
         <div class="menu-item" onclick="openTextEditor()"><b>T</b><span>טקסט</span></div>
-        <div class="menu-item" onclick="toggleIcons()"><b>⭐</b><span>אייקון</span></div>
+        <div class="menu-item" onclick="addIcon('heart')"><b>❤️</b><span>אייקון</span></div>
         <label class="menu-item"><b>🖼️</b><span>תמונה</span><input type="file" id="imageLoader" accept="image/*"></label>
         <div class="menu-item">
             <div class="color-circle"><input type="color" id="colorInput" value="#ffffff"></div>
-            <span>צבע</span>
+            <span>צבע טקסט</span>
         </div>
         <div class="menu-item" onclick="changeBg()"><b>🎨</b><span>רקע</span></div>
         <div class="menu-item" onclick="deleteObj()" style="border-color: #551a1a;"><b>🗑️</b><span>מחק</span></div>
-        <div class="menu-item" onclick="resetView()" style="border-color: #007bff;"><b>🎯</b><span>מרכז</span></div>
         <div class="menu-item save-btn" onclick="shareImg()"><b>💾</b><span>שמור</span></div>
     </div>
 
@@ -170,24 +160,22 @@
         <div id="canvas-wrapper">
             <canvas id="storyCanvas"></canvas>
         </div>
-        <div class="zoom-info" id="zoomLevel">זום: 100%</div>
     </div>
 
     <script>
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         const canvas = new fabric.Canvas('storyCanvas', { 
             width: 1080, height: 1920, 
-            backgroundColor: '#001f3f'
+            backgroundColor: '#001f3f' // כחול כהה התחלתי
         });
 
-        // הגדרות אובייקטים למובייל
+        // הגבלת רקעים
+        const bgOptions = ['#001f3f', '#87CEEB']; // כחול כהה, תכלת
+        let bgIdx = 0;
+
         fabric.Object.prototype.set({
-            transparentCorners: false,
-            cornerColor: '#ffffff',
-            cornerStrokeColor: '#007bff',
-            cornerStyle: 'circle',
-            cornerSize: 45, // גדול יותר למגע
-            padding: 10,
-            uniformScaling: true
+            transparentCorners: false, cornerColor: '#ffffff', cornerStrokeColor: '#007bff',
+            cornerStyle: 'circle', cornerSize: isMobile ? 45 : 25, padding: 10, uniformScaling: true
         });
         fabric.Object.prototype.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
 
@@ -196,10 +184,9 @@
         let isMoving = false;
         let activeTextObject = null;
 
-        // שמירת מצב
         function saveState() {
             if (isMoving) return;
-            stateStack.push(JSON.stringify(canvas.toJSON(['lineHeight', 'fontWeight'])));
+            stateStack.push(JSON.stringify(canvas.toJSON(['lineHeight', 'fontWeight', 'isIcon'])));
             redoStack = [];
             updateButtons();
         }
@@ -214,9 +201,7 @@
             redoStack.push(stateStack.pop());
             isMoving = true;
             canvas.loadFromJSON(stateStack[stateStack.length - 1], () => {
-                canvas.renderAll();
-                isMoving = false;
-                updateButtons();
+                canvas.renderAll(); isMoving = false; updateButtons();
             });
         }
 
@@ -226,18 +211,15 @@
             stateStack.push(next);
             isMoving = true;
             canvas.loadFromJSON(next, () => {
-                canvas.renderAll();
-                isMoving = false;
-                updateButtons();
+                canvas.renderAll(); isMoving = false; updateButtons();
             });
         }
 
-        // --- ניהול טקסט מושלם למובייל ---
+        // עריכת טקסט
         function openTextEditor(obj = null) {
             activeTextObject = obj;
             const overlay = document.getElementById('textEditorOverlay');
             const input = document.getElementById('textEditorInput');
-            
             input.value = obj ? obj.text : "";
             overlay.style.display = 'flex';
             setTimeout(() => input.focus(), 100);
@@ -250,95 +232,96 @@
                     activeTextObject.set('text', val);
                 } else {
                     const text = new fabric.IText(val, {
-                        left: 540, top: 960,
-                        fontFamily: 'FtMonopol', fontSize: 110, fill: 'white',
-                        textAlign: 'center', originX: 'center', originY: 'center',
-                        fontWeight: 'bold', lineHeight: 0.8, direction: 'rtl',
-                        editable: false // עורכים רק דרך ה-Overlay
+                        left: 540, top: 960, fontFamily: 'FtMonopol', fontSize: 110, fill: 'white',
+                        textAlign: 'center', originX: 'center', originY: 'center', fontWeight: 'bold',
+                        lineHeight: 0.8, direction: 'rtl', editable: false
                     });
                     text.on('mousedblclick', () => openTextEditor(text));
-                    canvas.add(text);
-                    canvas.setActiveObject(text);
+                    canvas.add(text); canvas.setActiveObject(text);
                 }
-                canvas.renderAll();
-                saveState();
+                canvas.renderAll(); saveState();
             }
             document.getElementById('textEditorOverlay').style.display = 'none';
             activeTextObject = null;
         }
 
-        // שינוי עובי וצבע
         function updateSelectedWeight(w) {
             const active = canvas.getActiveObject();
-            document.getElementById('boldBtn').classList.toggle('active', w === 'bold');
-            document.getElementById('regBtn').classList.toggle('active', w === 'normal');
-            if (active && active.type === 'i-text') {
+            if (active && active.type === 'i-text' && !active.isIcon) {
                 active.set('fontWeight', w);
-                canvas.renderAll();
-                saveState();
+                canvas.renderAll(); saveState();
             }
         }
 
         document.getElementById('colorInput').oninput = function() {
             const active = canvas.getActiveObject();
-            if (active && active.type === 'i-text') {
+            // צבע משתנה רק אם זה טקסט ולא אייקון
+            if (active && active.type === 'i-text' && !active.isIcon) {
                 active.set('fill', this.value);
                 canvas.renderAll();
             }
         };
         document.getElementById('colorInput').onchange = saveState;
 
-        // Pan & Zoom
+        // אייקונים (צבע מקובע)
+        function addIcon(type) {
+            const icons = { heart: '❤️' };
+            const text = new fabric.IText(icons[type], {
+                left: 540, top: 1100, fontSize: 150, originX: 'center', originY: 'center',
+                isIcon: true, selectable: true, editable: false
+            });
+            canvas.add(text); canvas.setActiveObject(text); saveState();
+        }
+
+        // ניהול תנועה מוגבלת במובייל / חסומה במחשב
         let isDragging = false, lastPosX, lastPosY;
         canvas.on('mouse:down', function(opt) {
-            if (!canvas.getActiveObject()) {
+            if (isMobile && !canvas.getActiveObject()) {
                 isDragging = true;
                 lastPosX = opt.e.touches ? opt.e.touches[0].clientX : opt.e.clientX;
                 lastPosY = opt.e.touches ? opt.e.touches[0].clientY : opt.e.clientY;
             }
         });
+
         canvas.on('mouse:move', function(opt) {
-            if (isDragging) {
+            if (isDragging && isMobile) {
                 const e = opt.e;
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                canvas.viewportTransform[4] += clientX - lastPosX;
-                canvas.viewportTransform[5] += clientY - lastPosY;
+                
+                let newX = canvas.viewportTransform[4] + (clientX - lastPosX);
+                let newY = canvas.viewportTransform[5] + (clientY - lastPosY);
+
+                // הגבלת תנועה "מעט מסביב" (טווח של 100 פיקסלים)
+                const limit = 100;
+                const wrapper = document.querySelector('.main-editor');
+                const baseScale = Math.min((wrapper.clientWidth-40)/1080, (wrapper.clientHeight-120)/1920);
+                const centerX = (wrapper.clientWidth - 1080 * baseScale) / 2;
+                const centerY = (wrapper.clientHeight - 1920 * baseScale) / 2;
+
+                if (Math.abs(newX - centerX) < limit) canvas.viewportTransform[4] = newX;
+                if (Math.abs(newY - centerY) < limit) canvas.viewportTransform[5] = newY;
+
                 canvas.requestRenderAll();
                 lastPosX = clientX; lastPosY = clientY;
             }
         });
         canvas.on('mouse:up', () => isDragging = false);
 
-        canvas.on('mouse:wheel', function(opt) {
-            let zoom = canvas.getZoom() * (0.999 ** opt.e.deltaY);
-            zoom = Math.min(Math.max(zoom, 0.2), 5);
-            canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
-            opt.e.preventDefault(); updateZoomLabel();
-        });
-
-        function updateZoomLabel() {
-            document.getElementById('zoomLevel').innerText = `זום: ${Math.round(canvas.getZoom() * 100)}%`;
-        }
-
         function resetView() {
             const wrapper = document.querySelector('.main-editor');
-            const scale = Math.min((wrapper.clientWidth-20)/1080, (wrapper.clientHeight-100)/1920);
+            const scale = Math.min((wrapper.clientWidth-40)/1080, (wrapper.clientHeight-120)/1920);
             canvas.setViewportTransform([scale, 0, 0, scale, (wrapper.clientWidth - 1080 * scale) / 2, (wrapper.clientHeight - 1920 * scale) / 2]);
-            updateZoomLabel();
+        }
+
+        function changeBg() {
+            bgIdx = (bgIdx + 1) % bgOptions.length;
+            canvas.setBackgroundColor(bgOptions[bgIdx], () => { canvas.renderAll(); saveState(); });
         }
 
         function deleteObj() { 
             const a = canvas.getActiveObject(); 
             if(a && a.selectable !== false) { canvas.remove(a); saveState(); }
-        }
-
-        function changeBg() {
-            const colors = ['#001f3f', '#0a0a0a', '#1a2a6c', '#b21f1f', '#2d5a27'];
-            const cur = canvas.backgroundColor;
-            canvas.setBackgroundColor(colors[(colors.indexOf(cur) + 1) % colors.length], () => {
-                canvas.renderAll(); saveState();
-            });
         }
 
         async function shareImg() {
@@ -353,10 +336,7 @@
         }
 
         window.addEventListener('resize', resetView);
-        document.fonts.ready.then(() => { 
-            resetView(); 
-            saveState(); // מצב התחלתי
-        });
+        document.fonts.ready.then(() => { resetView(); saveState(); });
     </script>
 </body>
 </html>
