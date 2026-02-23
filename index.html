@@ -13,7 +13,7 @@
         :root { 
             --vh: 1vh; 
             --accent: #007bff; 
-            --bg: #050505; 
+            --bg: #0a0a0a; /* רקע כהה יותר להפרדה */
             --panel: #1a1a1a; 
             --safe-top: env(safe-area-inset-top);
             --safe-bottom: env(safe-area-inset-bottom);
@@ -35,88 +35,96 @@
 
         body { display: flex; flex-direction: column; height: calc(var(--vh, 1vh) * 100); }
 
+        /* סרגל עליון - טקסט לבן לבקשתך */
         .app-bar {
             height: 60px; background: var(--panel);
             display: flex; align-items: center; justify-content: space-between;
-            padding: var(--safe-top) 15px 0 15px; border-bottom: 1px solid #333; z-index: 100;
+            padding: var(--safe-top) 20px 0 20px; border-bottom: 1px solid #333; z-index: 100;
         }
 
-        /* מכולה שדואגת שהקנבס תמיד יהיה בטווח הראייה */
+        .logo-area { line-height: 1.2; }
+        .logo-top { font-weight: bold; font-size: 18px; color: #ffffff; } /* לבן */
+        .logo-bottom { font-size: 11px; opacity: 0.8; color: #ffffff; letter-spacing: 1px; } /* לבן אופסיטי */
+
+        /* קונטיינר עם שוליים ברורים */
         .editor-container {
             flex: 1; position: relative; display: flex;
             align-items: center; justify-content: center; 
-            background: #000; padding: 10px; /* מרווח ביטחון קטן מהקצוות */
+            background: #000000; 
+            padding: 40px 20px; /* שוליים קבועים כדי להבדיל מהעיצוב */
         }
 
         #canvas-wrapper { 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.1), 0 20px 50px rgba(0,0,0,0.8); 
             position: relative;
-            background: #001f3f; 
+            background: #001f3f;
+            overflow: hidden;
         }
 
         .toolbar {
-            width: 95%; max-width: 500px;
-            background: rgba(30, 30, 30, 0.95);
+            width: 92%; max-width: 480px;
+            background: rgba(30, 30, 30, 0.98);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            padding: 8px 5px; border-radius: 25px;
+            padding: 10px 5px; border-radius: 30px;
             display: flex; justify-content: space-around;
-            border: 1px solid rgba(255,255,255,0.1);
-            position: absolute; bottom: calc(15px + var(--safe-bottom));
+            border: 1px solid rgba(255,255,255,0.15);
+            position: absolute; bottom: calc(20px + var(--safe-bottom));
             left: 50%; transform: translateX(-50%); z-index: 500;
         }
 
         .tool-btn {
             flex: 1; display: flex; flex-direction: column; align-items: center;
-            background: transparent; border: none; color: white; gap: 2px;
+            background: transparent; border: none; color: white; gap: 4px;
         }
-        .tool-btn i { font-size: 18px; font-style: normal; }
-        .tool-btn span { font-size: 9px; opacity: 0.7; }
+        .tool-btn i { font-size: 20px; font-style: normal; }
+        .tool-btn span { font-size: 10px; font-weight: bold; }
 
         .emoji-picker {
-            display: none; position: absolute; bottom: 80px; 
-            background: var(--panel); padding: 10px; border-radius: 15px;
-            grid-template-columns: repeat(4, 1fr); gap: 10px; border: 1px solid #444;
+            display: none; position: absolute; bottom: 85px; 
+            background: var(--panel); padding: 12px; border-radius: 20px;
+            grid-template-columns: repeat(4, 1fr); gap: 12px; border: 1px solid #444;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
 
         .floating-menu {
             position: absolute; display: none; background: var(--accent);
-            border-radius: 10px; padding: 4px; gap: 4px; z-index: 600;
+            border-radius: 12px; padding: 5px; gap: 5px; z-index: 600;
         }
         .floating-menu button {
-            background: white; border: none; border-radius: 6px; 
-            padding: 6px 12px; font-size: 12px; font-weight: bold;
+            background: white; border: none; border-radius: 8px; 
+            padding: 8px 14px; font-size: 13px; font-weight: bold;
         }
 
         #textEditorOverlay {
             display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.95); z-index: 2000;
-            flex-direction: column; padding: 20px;
-            padding-top: calc(40px + var(--safe-top));
+            background: rgba(0,0,0,0.97); z-index: 2000;
+            flex-direction: column; padding: 25px;
+            padding-top: calc(50px + var(--safe-top));
         }
 
         #textEditorInput {
             width: 100%; flex: 1; background: transparent; border: none;
-            color: white; font-size: 28px; text-align: center; outline: none;
+            color: white; font-size: 32px; text-align: center; outline: none;
             direction: rtl; font-family: 'FtMonopol', sans-serif; resize: none;
         }
 
         .btn-done {
-            background: var(--accent); color: white; width: 100%; padding: 15px;
-            border-radius: 15px; border: none; font-weight: bold; font-size: 18px;
+            background: var(--accent); color: white; width: 100%; padding: 18px;
+            border-radius: 20px; border: none; font-weight: bold; font-size: 20px;
             margin-bottom: var(--safe-bottom);
         }
 
-        .color-preview { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid white; }
+        .color-preview { width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div class="app-bar">
         <div class="logo-area">
-            <div class="logo-top" style="color:var(--accent); font-weight:bold;">צוות דוברות</div>
-            <div class="logo-bottom" style="font-size:10px; opacity:0.6;">STORY EDITOR</div>
+            <div class="logo-top">צוות דוברות</div>
+            <div class="logo-bottom">STORY EDITOR</div>
         </div>
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 15px;">
             <button class="tool-btn" onclick="undo()"><i>↩️</i></button>
             <button class="tool-btn" onclick="shareImg()"><i>💾</i></button>
         </div>
@@ -124,6 +132,7 @@
 
     <div class="editor-container">
         <div id="canvas-wrapper"><canvas id="storyCanvas"></canvas></div>
+        
         <div id="floatingMenu" class="floating-menu">
             <button onclick="duplicateObj()">שכפל</button>
             <button onclick="deleteObj()" style="color: #ff4444;">מחק</button>
@@ -157,7 +166,6 @@
     </div>
 
     <script>
-        // חסימת זום כפוי
         document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
         document.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
 
@@ -176,22 +184,26 @@
 
         fabric.Object.prototype.set({
             transparentCorners: false, cornerColor: '#007bff', cornerStrokeColor: '#ffffff',
-            cornerStyle: 'circle', cornerSize: 40, padding: 15
+            cornerStyle: 'circle', cornerSize: 45, padding: 15
         });
 
+        // לוגו גדול יותר (320px)
         function loadLogo() {
             fabric.Image.fromURL('logo.png', function(img) {
-                img.scaleToWidth(250);
-                img.set({ left: 540, top: 80, originX: 'center', originY: 'top', selectable: false, evented: false });
+                img.scaleToWidth(320); 
+                img.set({ left: 540, top: 100, originX: 'center', originY: 'top', selectable: false, evented: false });
                 canvas.setOverlayImage(img, canvas.renderAll.bind(canvas));
             });
         }
 
-        // פונקציית Resize חכמה - מבטיחה שהכל תמיד נראה
+        // פונקציית Resize עם Letterbox (שוליים מסביב)
         function resizeCanvas() {
             const container = document.querySelector('.editor-container');
-            const availableW = container.clientWidth;
-            const availableH = container.clientHeight - 80; // פחות מקום לטולבר
+            const paddingHorizontal = 60; // שוליים בצדדים
+            const paddingVertical = 120; // שוליים למעלה ולמטה
+
+            const availableW = container.clientWidth - paddingHorizontal;
+            const availableH = container.clientHeight - paddingVertical;
 
             const ratio = 1080 / 1920;
             let newW = availableW;
@@ -231,7 +243,7 @@
                     currentEditingObj.set('text', val);
                 } else {
                     const t = new fabric.Textbox(val, {
-                        left: 540, top: 960, width: 900,
+                        left: 540, top: 960, width: 920,
                         fontFamily: 'FtMonopol', fontSize: 100, fill: 'white',
                         textAlign: 'center', originX: 'center', originY: 'center', 
                         fontWeight: 'bold', direction: 'rtl', editable: false
@@ -246,7 +258,7 @@
 
         function toggleBold() {
             const obj = canvas.getActiveObject();
-            if (obj && (obj.type === 'textbox' || obj.type === 'i-text')) {
+            if (obj && obj.type === 'textbox') {
                 obj.set('fontWeight', obj.fontWeight === 'bold' ? 'normal' : 'bold');
                 canvas.renderAll(); saveState();
             }
@@ -259,7 +271,7 @@
 
         function addIcon(emoji) {
             const t = new fabric.IText(emoji, { 
-                left: 540, top: 960, fontSize: 150, originX: 'center', originY: 'center', editable: false 
+                left: 540, top: 960, fontSize: 160, originX: 'center', originY: 'center', editable: false 
             });
             canvas.add(t); canvas.setActiveObject(t); toggleEmojiPicker(); saveState();
         }
@@ -275,14 +287,14 @@
             const rect = obj.getBoundingRect();
             menu.style.display = 'flex';
             menu.style.left = `${rect.left + (rect.width/2) - 50}px`;
-            menu.style.top = `${rect.top - 55}px`;
+            menu.style.top = `${rect.top - 65}px`;
         }
 
         function duplicateObj() {
             const obj = canvas.getActiveObject();
             if (obj) obj.clone(cloned => {
                 canvas.discardActiveObject();
-                cloned.set({ left: obj.left + 40, top: obj.top + 40 });
+                cloned.set({ left: obj.left + 50, top: obj.top + 50 });
                 canvas.add(cloned); canvas.setActiveObject(cloned); saveState();
             }, ['fontWeight', 'fontFamily', 'width', 'textAlign']);
         }
@@ -303,8 +315,8 @@
             const reader = new FileReader();
             reader.onload = f => {
                 fabric.Image.fromURL(f.target.result, img => {
-                    img.scaleToWidth(600);
-                    img.set({ left: 540, top: 960, originX: 'center', originY: 'center' });
+                    img.scaleToWidth(700);
+                    img.set({ left: 540, top: 1100, originX: 'center', originY: 'center' });
                     canvas.add(img); canvas.setActiveObject(img); saveState();
                 });
             };
@@ -336,8 +348,6 @@
         }
 
         async function shareImg() {
-            // שמירה באיכות מקסימלית 1080X1920
-            const tempScale = 1 / canvas.getZoom();
             canvas.setZoom(1); canvas.setWidth(1080); canvas.setHeight(1920);
             canvas.discardActiveObject().renderAll();
             const dataURL = canvas.toDataURL({ format: 'png' });
