@@ -92,6 +92,23 @@
             border: 1px solid #222;
         }
 
+        /* סרגל כלים עליון מעודכן */
+        .top-tools {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px; z-index: 50; align-items: center;
+        }
+
+        .tool-group {
+            display: flex; background: rgba(30,30,30,0.9); padding: 5px; border-radius: 50px; border: 1px solid #444; gap: 2px;
+        }
+
+        .tool-btn {
+            padding: 8px 14px; border-radius: 50px; border: none; color: #fff; background: transparent; cursor: pointer; font-weight: bold; font-size: 14px;
+        }
+        .tool-btn:disabled { opacity: 0.3; cursor: default; }
+        .tool-btn.active { background: #fff; color: #000; }
+        .arrow-btn { font-size: 18px; padding: 5px 15px; }
+
         /* מגירת אייקונים */
         .icon-drawer {
             position: absolute; bottom: -350px; left: 0; width: 100%; height: 300px;
@@ -100,17 +117,6 @@
         }
         .icon-drawer.open { bottom: 0; }
         .icon-item { font-size: 40px; text-align: center; cursor: pointer; padding: 10px; background: #222; border-radius: 12px; }
-
-        /* סרגל כלים עליון */
-        .text-tools {
-            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-            display: flex; background: rgba(30,30,30,0.9); padding: 5px; border-radius: 50px; gap: 5px; z-index: 50;
-            border: 1px solid #444;
-        }
-        .tool-btn {
-            padding: 8px 16px; border-radius: 50px; border: none; color: #888; background: transparent; cursor: pointer; font-weight: bold;
-        }
-        .tool-btn.active { background: #fff; color: #000; }
 
         input[type="file"] { display: none; }
     </style>
@@ -135,9 +141,15 @@
     </div>
 
     <div class="main-editor">
-        <div class="text-tools">
-            <button id="boldBtn" class="tool-btn active" onclick="updateSelectedWeight('bold')">מודגש</button>
-            <button id="regBtn" class="tool-btn" onclick="updateSelectedWeight('normal')">רגיל</button>
+        <div class="top-tools">
+            <div class="tool-group">
+                <button class="tool-btn arrow-btn" onclick="undo()" id="undoBtn">↪️</button>
+                <button class="tool-btn arrow-btn" onclick="redo()" id="redoBtn">↩️</button>
+            </div>
+            <div class="tool-group">
+                <button id="boldBtn" class="tool-btn active" onclick="updateSelectedWeight('bold')">מודגש</button>
+                <button id="regBtn" class="tool-btn" onclick="updateSelectedWeight('normal')">רגיל</button>
+            </div>
         </div>
         <div id="canvas-wrapper"><canvas id="storyCanvas"></canvas></div>
     </div>
@@ -157,7 +169,54 @@
             backgroundColor: '#001f3f'
         });
 
-        // הגדרות גלובליות
+        // מערכת Undo/Redo
+        let stateStack = [];
+        let redoStack = [];
+        let isMoving = false;
+
+        function saveState() {
+            if (isMoving) return;
+            const json = JSON.stringify(canvas.toJSON(['lineHeight', 'direction', 'fontWeight', 'selectable', 'evented']));
+            stateStack.push(json);
+            redoStack = []; // ניקוי ה-redo כשיש פעולה חדשה
+            updateUndoButtons();
+        }
+
+        function undo() {
+            if (stateStack.length <= 1) return;
+            redoStack.push(stateStack.pop());
+            const lastState = stateStack[stateStack.length - 1];
+            isMoving = true;
+            canvas.loadFromJSON(lastState, () => {
+                canvas.renderAll();
+                isMoving = false;
+                updateUndoButtons();
+            });
+        }
+
+        function redo() {
+            if (redoStack.length === 0) return;
+            const nextState = redoStack.pop();
+            stateStack.push(nextState);
+            isMoving = true;
+            canvas.loadFromJSON(nextState, () => {
+                canvas.renderAll();
+                isMoving = false;
+                updateUndoButtons();
+            });
+        }
+
+        function updateUndoButtons() {
+            document.getElementById('undoBtn').disabled = stateStack.length <= 1;
+            document.getElementById('redoBtn').disabled = redoStack.length === 0;
+        }
+
+        // האזנה לשינויים לשמירה אוטומטית
+        canvas.on('object:modified', saveState);
+        canvas.on('object:added', saveState);
+        canvas.on('object:removed', saveState);
+
+        // הגדרות אובייקטים
         fabric.Object.prototype.set({
             transparentCorners: false,
             cornerColor: '#ffffff',
@@ -167,7 +226,6 @@
             padding: 10,
             uniformScaling: true
         });
-
         fabric.Object.prototype.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
 
         const backgroundOptions = ['#001f3f', '#87CEEB', '#0a0a0a', '#5DADE2', '#1a2a6c', '#b21f1f'];
@@ -175,7 +233,10 @@
 
         function changeBg() {
             bgIdx = (bgIdx + 1) % backgroundOptions.length;
-            canvas.setBackgroundColor(backgroundOptions[bgIdx], canvas.renderAll.bind(canvas));
+            canvas.setBackgroundColor(backgroundOptions[bgIdx], () => {
+                canvas.renderAll();
+                saveState();
+            });
         }
 
         function fitCanvas() {
@@ -187,24 +248,18 @@
         function loadLogo() {
             fabric.Image.fromURL('logo.png', function(img) {
                 img.set({ left: 540, top: 200, originX: 'center', selectable: false, evented: false });
-                img.scaleToWidth(380); canvas.add(img);
+                img.scaleToWidth(380); 
+                canvas.add(img);
+                saveState(); // מצב התחלתי
             }, { crossOrigin: 'anonymous' });
         }
 
-        // יצירת טקסט חדש עם רווח שורות מצומצם
         function addNewText() {
             const text = new fabric.IText('לחץ פעמיים\nלעריכה', {
                 left: 540, top: 960,
-                fontFamily: 'FtMonopol',
-                fontSize: 100,
-                fill: 'white',
-                textAlign: 'center',
-                originX: 'center',
-                originY: 'center',
-                direction: 'rtl',
-                fontWeight: 'bold',
-                lineHeight: 0.8, // צמצום הרווח בין השורות
-                editable: true
+                fontFamily: 'FtMonopol', fontSize: 100, fill: 'white',
+                textAlign: 'center', originX: 'center', originY: 'center',
+                direction: 'rtl', fontWeight: 'bold', lineHeight: 0.8, editable: true
             });
             canvas.add(text);
             canvas.setActiveObject(text);
@@ -216,10 +271,10 @@
             const active = canvas.getActiveObject();
             document.getElementById('boldBtn').classList.toggle('active', w === 'bold');
             document.getElementById('regBtn').classList.toggle('active', w === 'normal');
-            
-            if (active && (active.type === 'i-text')) {
+            if (active && active.type === 'i-text') {
                 active.set('fontWeight', w);
                 canvas.renderAll();
+                saveState();
             }
         }
 
@@ -230,6 +285,7 @@
                 canvas.renderAll();
             }
         };
+        document.getElementById('colorInput').onchange = saveState;
 
         canvas.on('object:moving', function(e) {
             const obj = e.target;
@@ -245,6 +301,7 @@
                 canvas.getObjects().forEach(obj => { if(obj.selectable) canvas.remove(obj); });
                 bgIdx = 0;
                 canvas.setBackgroundColor(backgroundOptions[0], canvas.renderAll.bind(canvas));
+                saveState();
             }
         }
 
