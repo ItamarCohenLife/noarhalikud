@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>עורך סטורי - צוות דוברות</title>
+    <title>עורך סטורי מקצועי - צוות דוברות</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
-        /* טעינת פונטים */
         @font-face { font-family: 'FtMonopol'; src: url('FtMonopol-Bold.woff2') format('woff2'); font-weight: bold; }
         @font-face { font-family: 'FtMonopol'; src: url('FtMonopol-Regular.woff2') format('woff2'); font-weight: normal; }
 
         :root { 
-            --vh: 1vh; --accent: #007bff; --bg: #0f0f0f; --panel: #1a1a1a; 
+            --vh: 1vh; --accent: #007bff; --bg: #0a0a0a; --panel: #1a1a1a; 
             --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom);
         }
 
@@ -24,7 +23,7 @@
         html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; background-color: var(--bg); }
         body { display: flex; flex-direction: column; height: calc(var(--vh, 1vh) * 100); }
 
-        /* סרגל עליון */
+        /* סרגל עליון לבן ונקי */
         .app-bar {
             height: 60px; background: var(--panel); display: flex; align-items: center; 
             justify-content: space-between; padding: var(--safe-top) 20px 0 20px; 
@@ -33,23 +32,25 @@
         .logo-top { font-weight: bold; font-size: 18px; color: #ffffff; }
         .logo-bottom { font-size: 11px; opacity: 0.6; color: #ffffff; letter-spacing: 1px; }
 
-        /* אזור העבודה - תצוגה מלאה תמיד */
+        /* קונטיינר עבודה עם הגנה על שוליים */
         .editor-container {
             flex: 1; position: relative; display: flex; align-items: center; 
-            justify-content: center; background: #000; padding: 30px;
+            justify-content: center; background: #000; 
+            padding: 20px; /* שוליים קבועים להפרדה מהמסך */
         }
 
         #canvas-wrapper { 
-            box-shadow: 0 0 0 1px rgba(255,255,255,0.2), 0 25px 50px rgba(0,0,0,0.9); 
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.15), 0 30px 70px rgba(0,0,0,1); 
             position: relative; background: #001f3f;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        /* טולבר */
+        /* סרגל כלים תחתון */
         .toolbar {
-            width: 95%; max-width: 500px; background: rgba(30,30,30,0.95); 
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            padding: 10px 5px; border-radius: 30px; display: flex; 
-            justify-content: space-around; border: 1px solid rgba(255,255,255,0.1);
+            width: 95%; max-width: 500px; background: rgba(30,30,30,0.98); 
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            padding: 12px 5px; border-radius: 35px; display: flex; 
+            justify-content: space-around; border: 1px solid rgba(255,255,255,0.15);
             position: absolute; bottom: calc(20px + var(--safe-bottom)); 
             left: 50%; transform: translateX(-50%); z-index: 500;
         }
@@ -61,23 +62,22 @@
         .tool-btn i { font-size: 20px; font-style: normal; }
         .tool-btn span { font-size: 10px; font-weight: bold; }
 
-        /* תפריטים צפים */
         .emoji-picker {
-            display: none; position: absolute; bottom: 85px; background: var(--panel); 
-            padding: 12px; border-radius: 20px; grid-template-columns: repeat(4, 1fr); 
-            gap: 12px; border: 1px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: none; position: absolute; bottom: 90px; background: var(--panel); 
+            padding: 15px; border-radius: 20px; grid-template-columns: repeat(4, 1fr); 
+            gap: 12px; border: 1px solid #444; box-shadow: 0 15px 40px rgba(0,0,0,0.6);
         }
 
         .floating-menu {
             position: absolute; display: none; background: var(--accent);
-            border-radius: 12px; padding: 5px; gap: 5px; z-index: 600;
+            border-radius: 12px; padding: 6px; gap: 6px; z-index: 600;
         }
         .floating-menu button {
             background: white; border: none; border-radius: 8px; 
-            padding: 8px 14px; font-size: 13px; font-weight: bold; cursor: pointer;
+            padding: 8px 16px; font-size: 13px; font-weight: bold; cursor: pointer;
         }
 
-        /* עורך טקסט */
+        /* עורך טקסט במצב עריכה */
         #textEditorOverlay {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); 
             z-index: 2000; flex-direction: column; padding: 30px;
@@ -85,15 +85,15 @@
         }
         #textEditorInput {
             width: 100%; flex: 1; background: transparent; border: none;
-            color: white; font-size: 32px; text-align: center; outline: none;
+            color: white; font-size: 36px; text-align: center; outline: none;
             direction: rtl; font-family: 'FtMonopol', sans-serif; resize: none;
         }
         .btn-done {
-            background: var(--accent); color: white; width: 100%; padding: 20px;
-            border-radius: 20px; border: none; font-weight: bold; font-size: 20px;
-            margin-bottom: var(--safe-bottom);
+            background: var(--accent); color: white; width: 100%; padding: 22px;
+            border-radius: 25px; border: none; font-weight: bold; font-size: 20px;
+            margin-bottom: var(--safe-bottom); cursor: pointer;
         }
-        .color-preview { width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; }
+        .color-preview { width: 22px; height: 22px; border-radius: 50%; border: 2.5px solid white; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -143,7 +143,7 @@
     </div>
 
     <script>
-        // מניעת זום בכל המכשירים
+        // מניעת זום וכפיית גובה
         document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
         document.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
 
@@ -154,7 +154,8 @@
         window.addEventListener('resize', fixHeight);
 
         const canvas = new fabric.Canvas('storyCanvas', {
-            width: 1080, height: 1920, backgroundColor: '#001f3f', selection: false
+            width: 1080, height: 1920, backgroundColor: '#001f3f', selection: false,
+            preserveObjectStacking: true
         });
 
         const bgOptions = ['#001f3f', '#87CEEB'];
@@ -165,28 +166,31 @@
             cornerStyle: 'circle', cornerSize: 45, padding: 10
         });
 
-        // לוגו קבוע - גדול יותר ולא ניתן להזזה
         function loadLogo() {
             fabric.Image.fromURL('logo.png', function(img) {
                 img.scaleToWidth(320); 
-                img.set({ left: 540, top: 100, originX: 'center', originY: 'top', selectable: false, evented: false });
+                img.set({ left: 540, top: 120, originX: 'center', originY: 'top', selectable: false, evented: false });
                 canvas.setOverlayImage(img, canvas.renderAll.bind(canvas));
             });
         }
 
-        // פונקציית Resize שמבטיחה שרואים הכל (גם במחשב)
+        // פונקציית Resize חכמה למחשב ולנייד
         function resizeCanvas() {
             const container = document.querySelector('.editor-container');
-            const availableW = container.clientWidth - 40;
-            const availableH = container.clientHeight - 40;
+            const availableW = container.clientWidth - 60; // שוליים אופקיים
+            const availableH = container.clientHeight - 120; // שוליים אנכיים (פחות מקום לטולבר)
             const ratio = 1080 / 1920;
             
-            let newW = availableW;
-            let newH = availableW / ratio;
+            let newW, newH;
 
-            if (newH > availableH) {
+            // אם המסך רחב מדי (כמו במחשב), ננעל את הגובה
+            if (availableW / availableH > ratio) {
                 newH = availableH;
                 newW = availableH * ratio;
+            } else {
+                // אם המסך צר מדי (כמו בנייד), ננעל את הרוחב
+                newW = availableW;
+                newH = availableW / ratio;
             }
 
             canvas.setZoom(newW / 1080);
@@ -196,7 +200,7 @@
             const wrapper = document.getElementById('canvas-wrapper');
             wrapper.style.width = newW + "px";
             wrapper.style.height = newH + "px";
-            canvas.renderAll();
+            canvas.requestRenderAll();
         }
 
         const overlay = document.getElementById('textEditorOverlay'), textInput = document.getElementById('textEditorInput');
@@ -212,6 +216,8 @@
             if (val) {
                 if (currentEditingObj) {
                     currentEditingObj.set({ text: val });
+                    currentEditingObj.initDimensions();
+                    currentEditingObj.setCoords();
                 } else {
                     const t = new fabric.Textbox(val, {
                         left: 540, top: 960, width: 920, fontFamily: 'FtMonopol', fontSize: 100, fill: 'white',
@@ -222,41 +228,40 @@
                 }
                 saveState();
             } else if (currentEditingObj) { canvas.remove(currentEditingObj); }
-            overlay.style.display = 'none'; canvas.renderAll();
+            overlay.style.display = 'none'; canvas.requestRenderAll();
         }
 
+        // תיקון "קפיצת הטקסט" בעת שינוי הדגשה
         function toggleBold() {
             const obj = canvas.getActiveObject();
             if (obj && obj.type === 'textbox') {
-                obj.set('fontWeight', obj.fontWeight === 'bold' ? 'normal' : 'bold');
-                canvas.renderAll(); saveState();
+                const newWeight = obj.fontWeight === 'bold' ? 'normal' : 'bold';
+                obj.set('fontWeight', newWeight);
+                
+                // כוח המשימה לתיקון רינדור:
+                obj.initDimensions(); 
+                obj.setCoords(); 
+                
+                canvas.requestRenderAll(); 
+                saveState();
             }
         }
 
-        // כלי חיתוך בסיסי
         function startCrop() {
             const obj = canvas.getActiveObject();
             if (!obj || obj.type !== 'image') return;
-            
-            // יצירת מלבן חיתוך
             const clipRect = new fabric.Rect({
-                left: obj.left, top: obj.top, width: obj.width * obj.scaleX / 2, height: obj.height * obj.scaleY / 2,
+                left: obj.left, top: obj.top, width: obj.getScaledWidth()/1.5, height: obj.getScaledHeight()/1.5,
                 fill: 'rgba(255,255,255,0.3)', stroke: 'white', strokeDashArray: [5, 5], originX: 'center', originY: 'center'
             });
-            
-            canvas.add(clipRect);
-            canvas.setActiveObject(clipRect);
-            
+            canvas.add(clipRect); canvas.setActiveObject(clipRect);
             const btn = document.getElementById('cropBtn');
             btn.innerText = "אשר";
             btn.onclick = () => {
                 obj.set('clipPath', clipRect);
-                canvas.remove(clipRect);
-                canvas.setActiveObject(obj);
-                btn.innerText = "חתוך";
-                btn.onclick = startCrop;
-                canvas.renderAll();
-                saveState();
+                canvas.remove(clipRect); canvas.setActiveObject(obj);
+                btn.innerText = "חתוך"; btn.onclick = startCrop;
+                canvas.renderAll(); saveState();
             };
         }
 
@@ -282,7 +287,7 @@
             const rect = obj.getBoundingRect();
             menu.style.display = 'flex';
             menu.style.left = `${rect.left + (rect.width/2) - 60}px`;
-            menu.style.top = `${rect.top - 75}px`;
+            menu.style.top = `${rect.top - 80}px`;
             document.getElementById('cropBtn').style.display = (obj.type === 'image') ? 'inline-block' : 'none';
         }
 
@@ -332,14 +337,14 @@
 
         function saveState() {
             history.push(JSON.stringify(canvas.toJSON(['fontWeight', 'fontFamily', 'width', 'textAlign', 'clipPath'])));
-            if(history.length > 20) history.shift();
+            if(history.length > 25) history.shift();
         }
 
         function undo() {
             if(history.length > 1) {
                 history.pop();
                 canvas.loadFromJSON(history[history.length-1], () => {
-                    loadLogo(); // הבטחת קיום הלוגו אחרי Undo
+                    loadLogo();
                     canvas.renderAll();
                 });
             }
