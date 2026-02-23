@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>עורך סטורי מקצועי - צוות דוברות</title>
+    <title>עורך סטורי - צוות דוברות</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
+        /* טעינת פונטים */
         @font-face { font-family: 'FtMonopol'; src: url('FtMonopol-Bold.woff2') format('woff2'); font-weight: bold; }
         @font-face { font-family: 'FtMonopol'; src: url('FtMonopol-Regular.woff2') format('woff2'); font-weight: normal; }
 
         :root { 
-            --vh: 1vh; --accent: #007bff; --bg: #0a0a0a; --panel: #1a1a1a; 
+            --vh: 1vh; --accent: #007bff; --bg: #050505; --panel: #1a1a1a; 
             --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom);
         }
 
@@ -23,7 +24,7 @@
         html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; background-color: var(--bg); }
         body { display: flex; flex-direction: column; height: calc(var(--vh, 1vh) * 100); }
 
-        /* סרגל עליון לבן ונקי */
+        /* סרגל עליון לבן */
         .app-bar {
             height: 60px; background: var(--panel); display: flex; align-items: center; 
             justify-content: space-between; padding: var(--safe-top) 20px 0 20px; 
@@ -32,25 +33,26 @@
         .logo-top { font-weight: bold; font-size: 18px; color: #ffffff; }
         .logo-bottom { font-size: 11px; opacity: 0.6; color: #ffffff; letter-spacing: 1px; }
 
-        /* קונטיינר עבודה עם הגנה על שוליים */
+        /* אזור העבודה - מבטיח ראות מלאה במחשב */
         .editor-container {
             flex: 1; position: relative; display: flex; align-items: center; 
             justify-content: center; background: #000; 
-            padding: 20px; /* שוליים קבועים להפרדה מהמסך */
+            overflow: hidden;
+            padding: 40px 20px 120px 20px; /* מרווח תחתון גדול יותר בשביל הטולבר */
         }
 
         #canvas-wrapper { 
-            box-shadow: 0 0 0 1px rgba(255,255,255,0.15), 0 30px 70px rgba(0,0,0,1); 
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 0 40px rgba(0,0,0,0.5); 
             position: relative; background: #001f3f;
-            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.2s ease;
         }
 
-        /* סרגל כלים תחתון */
+        /* טולבר */
         .toolbar {
-            width: 95%; max-width: 500px; background: rgba(30,30,30,0.98); 
-            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            padding: 12px 5px; border-radius: 35px; display: flex; 
-            justify-content: space-around; border: 1px solid rgba(255,255,255,0.15);
+            width: 90%; max-width: 480px; background: rgba(26,26,26,0.98); 
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: 10px 5px; border-radius: 30px; display: flex; 
+            justify-content: space-around; border: 1px solid rgba(255,255,255,0.1);
             position: absolute; bottom: calc(20px + var(--safe-bottom)); 
             left: 50%; transform: translateX(-50%); z-index: 500;
         }
@@ -59,41 +61,42 @@
             flex: 1; display: flex; flex-direction: column; align-items: center;
             background: transparent; border: none; color: white; gap: 4px; cursor: pointer;
         }
-        .tool-btn i { font-size: 20px; font-style: normal; }
-        .tool-btn span { font-size: 10px; font-weight: bold; }
+        .tool-btn i { font-size: 18px; font-style: normal; }
+        .tool-btn span { font-size: 9px; font-weight: bold; }
 
-        .emoji-picker {
-            display: none; position: absolute; bottom: 90px; background: var(--panel); 
-            padding: 15px; border-radius: 20px; grid-template-columns: repeat(4, 1fr); 
-            gap: 12px; border: 1px solid #444; box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-        }
-
+        /* מניו צף */
         .floating-menu {
             position: absolute; display: none; background: var(--accent);
-            border-radius: 12px; padding: 6px; gap: 6px; z-index: 600;
+            border-radius: 12px; padding: 5px; gap: 5px; z-index: 600;
         }
         .floating-menu button {
             background: white; border: none; border-radius: 8px; 
-            padding: 8px 16px; font-size: 13px; font-weight: bold; cursor: pointer;
+            padding: 8px 14px; font-size: 12px; font-weight: bold; cursor: pointer;
         }
 
-        /* עורך טקסט במצב עריכה */
+        /* עורך טקסט */
         #textEditorOverlay {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); 
-            z-index: 2000; flex-direction: column; padding: 30px;
-            padding-top: calc(60px + var(--safe-top));
+            z-index: 2000; flex-direction: column; padding: 25px;
+            padding-top: calc(50px + var(--safe-top));
         }
         #textEditorInput {
             width: 100%; flex: 1; background: transparent; border: none;
-            color: white; font-size: 36px; text-align: center; outline: none;
+            color: white; font-size: 32px; text-align: center; outline: none;
             direction: rtl; font-family: 'FtMonopol', sans-serif; resize: none;
         }
         .btn-done {
-            background: var(--accent); color: white; width: 100%; padding: 22px;
-            border-radius: 25px; border: none; font-weight: bold; font-size: 20px;
-            margin-bottom: var(--safe-bottom); cursor: pointer;
+            background: var(--accent); color: white; width: 100%; padding: 18px;
+            border-radius: 20px; border: none; font-weight: bold; font-size: 18px;
+            margin-bottom: var(--safe-bottom);
         }
-        .color-preview { width: 22px; height: 22px; border-radius: 50%; border: 2.5px solid white; }
+        .color-preview { width: 18px; height: 18px; border-radius: 50%; border: 2px solid white; }
+        
+        .emoji-picker {
+            display: none; position: absolute; bottom: 85px; background: var(--panel); 
+            padding: 12px; border-radius: 20px; grid-template-columns: repeat(4, 1fr); 
+            gap: 12px; border: 1px solid #444;
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -144,9 +147,6 @@
 
     <script>
         // מניעת זום וכפיית גובה
-        document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
-        document.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
-
         const fixHeight = () => {
             document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
             resizeCanvas();
@@ -174,21 +174,24 @@
             });
         }
 
-        // פונקציית Resize חכמה למחשב ולנייד
+        // פונקציית Resize משופרת למחשב
         function resizeCanvas() {
             const container = document.querySelector('.editor-container');
-            const availableW = container.clientWidth - 60; // שוליים אופקיים
-            const availableH = container.clientHeight - 120; // שוליים אנכיים (פחות מקום לטולבר)
+            const paddingH = 40;
+            const paddingV = 160; // מקום ל-Toolbar וסרגל עליון
+
+            const availableW = container.clientWidth - paddingH;
+            const availableH = container.clientHeight - paddingV;
             const ratio = 1080 / 1920;
-            
+
             let newW, newH;
 
-            // אם המסך רחב מדי (כמו במחשב), ננעל את הגובה
+            // אם המסך רחב (מחשב) - הגובה הוא המגבלה
             if (availableW / availableH > ratio) {
                 newH = availableH;
                 newW = availableH * ratio;
             } else {
-                // אם המסך צר מדי (כמו בנייד), ננעל את הרוחב
+                // אם המסך צר (נייד) - הרוחב הוא המגבלה
                 newW = availableW;
                 newH = availableW / ratio;
             }
@@ -231,17 +234,13 @@
             overlay.style.display = 'none'; canvas.requestRenderAll();
         }
 
-        // תיקון "קפיצת הטקסט" בעת שינוי הדגשה
         function toggleBold() {
             const obj = canvas.getActiveObject();
             if (obj && obj.type === 'textbox') {
                 const newWeight = obj.fontWeight === 'bold' ? 'normal' : 'bold';
                 obj.set('fontWeight', newWeight);
-                
-                // כוח המשימה לתיקון רינדור:
                 obj.initDimensions(); 
                 obj.setCoords(); 
-                
                 canvas.requestRenderAll(); 
                 saveState();
             }
