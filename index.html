@@ -6,8 +6,18 @@
     <title>עיצוב סטורי - צוות דוברות</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
-        @font-face { font-family: 'FtMonopol'; src: url('FtMonopol-Bold.woff2') format('woff2'); font-weight: bold; }
-        
+        /* טעינת הפונטים מהתיקייה המקומית */
+        @font-face { 
+            font-family: 'FtMonopol'; 
+            src: url('FtMonopol-Bold.woff2') format('woff2'); 
+            font-weight: bold; 
+        }
+        @font-face { 
+            font-family: 'FtMonopol'; 
+            src: url('FtMonopol-Regular.woff2') format('woff2'); 
+            font-weight: normal; 
+        }
+
         :root { 
             --vh: 1vh; 
             --accent: #007bff; 
@@ -19,10 +29,11 @@
 
         * { 
             box-sizing: border-box; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            font-family: 'FtMonopol', sans-serif; /* שימוש בפונט כברירת מחדל */
             -webkit-tap-highlight-color: transparent; 
             margin: 0; padding: 0;
             user-select: none;
+            touch-action: none; /* מניעת מחוות דפדפן */
         }
 
         html, body {
@@ -33,15 +44,10 @@
             background-color: var(--bg);
         }
 
-        body {
-            display: flex;
-            flex-direction: column;
-            height: calc(var(--vh, 1vh) * 100);
-        }
+        body { display: flex; flex-direction: column; height: calc(var(--vh, 1vh) * 100); }
 
         .app-bar {
             height: 60px;
-            min-height: 60px;
             background: var(--panel);
             display: flex;
             align-items: center;
@@ -51,10 +57,6 @@
             z-index: 100;
         }
 
-        .logo-area { line-height: 1.1; }
-        .logo-top { font-weight: bold; font-size: 16px; color: var(--accent); }
-        .logo-bottom { font-size: 10px; opacity: 0.6; letter-spacing: 1px; }
-
         .editor-container {
             flex: 1;
             position: relative;
@@ -62,55 +64,39 @@
             align-items: center;
             justify-content: center;
             background: #000;
-            overflow: hidden;
-            touch-action: none;
         }
 
-        #canvas-wrapper { 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            position: relative;
-        }
+        #canvas-wrapper { box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; }
 
         .toolbar {
-            width: 95%;
-            max-width: 500px;
+            width: 95%; max-width: 500px;
             background: rgba(30, 30, 30, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding: 8px 5px;
-            border-radius: 25px;
-            display: flex;
-            justify-content: space-around;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: 8px 5px; border-radius: 25px;
+            display: flex; justify-content: space-around;
             border: 1px solid rgba(255,255,255,0.1);
-            position: absolute;
-            bottom: calc(15px + var(--safe-bottom));
-            left: 50%;
-            transform: translateX(-50%);
+            position: absolute; bottom: calc(15px + var(--safe-bottom));
+            left: 50%; transform: translateX(-50%);
             z-index: 500;
         }
 
         .tool-btn {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: transparent;
-            border: none;
-            color: white;
-            gap: 2px;
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            background: transparent; border: none; color: white; gap: 2px;
         }
         .tool-btn i { font-size: 18px; font-style: normal; }
         .tool-btn span { font-size: 9px; opacity: 0.7; }
-        
+
+        /* תפריט אייקונים מהיר */
+        .emoji-picker {
+            display: none; position: absolute; bottom: 80px; 
+            background: var(--panel); padding: 10px; border-radius: 15px;
+            grid-template-columns: repeat(4, 1fr); gap: 10px; border: 1px solid #444;
+        }
+
         .floating-menu {
-            position: absolute;
-            display: none;
-            background: var(--accent);
-            border-radius: 10px;
-            padding: 4px;
-            gap: 4px;
-            z-index: 600;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: absolute; display: none; background: var(--accent);
+            border-radius: 10px; padding: 4px; gap: 4px; z-index: 600;
         }
         .floating-menu button {
             background: white; border: none; border-radius: 6px; 
@@ -118,51 +104,29 @@
         }
 
         #textEditorOverlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.95);
-            z-index: 2000;
-            flex-direction: column;
-            padding: 20px;
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.95); z-index: 2000;
+            flex-direction: column; padding: 20px;
             padding-top: calc(40px + var(--safe-top));
         }
 
         #textEditorInput {
-            width: 100%;
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 28px;
-            text-align: center;
-            outline: none;
-            direction: rtl;
-            user-select: text;
+            width: 100%; flex: 1; background: transparent; border: none;
+            color: white; font-size: 32px; text-align: center; outline: none;
+            direction: rtl; font-family: 'FtMonopol', sans-serif;
         }
 
         .btn-done {
-            background: var(--accent);
-            color: white;
-            width: 100%;
-            padding: 15px;
-            border-radius: 15px;
-            border: none;
-            font-weight: bold;
-            font-size: 18px;
+            background: var(--accent); color: white; width: 100%; padding: 15px;
+            border-radius: 15px; border: none; font-weight: bold; font-size: 18px;
             margin-bottom: var(--safe-bottom);
         }
 
         .color-preview { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid white; }
     </style>
 </head>
-<body>
-
-    <div class="app-bar">
-        <div class="logo-area">
-            <div class="logo-top">צוות דוברות</div>
-            <div class="logo-bottom">STORY EDITOR</div>
-        </div>
+<body oncontextmenu="return false;"> <div class="app-bar">
+        <div class="logo-area"><div class="logo-top">צוות דוברות</div><div class="logo-bottom">STORY EDITOR</div></div>
         <div style="display: flex; gap: 10px;">
             <button class="tool-btn" onclick="undo()"><i>↩️</i></button>
             <button class="tool-btn" onclick="shareImg()"><i>💾</i></button>
@@ -171,7 +135,6 @@
 
     <div class="editor-container">
         <div id="canvas-wrapper"><canvas id="storyCanvas"></canvas></div>
-        
         <div id="floatingMenu" class="floating-menu">
             <button onclick="duplicateObj()">שכפל</button>
             <button onclick="deleteObj()" style="color: #ff4444;">מחק</button>
@@ -180,14 +143,19 @@
 
     <div class="toolbar">
         <button class="tool-btn" onclick="openTextEditor()"><i>T</i><span>טקסט</span></button>
-        <button class="tool-btn" onclick="addIcon()"><i>❤️</i><span>אייקון</span></button>
-        <label class="tool-btn">
-            <i>🖼️</i><span>תמונה</span>
-            <input type="file" id="imageLoader" accept="image/*" style="display:none">
-        </label>
+        <div style="position: relative;">
+            <button class="tool-btn" onclick="toggleEmojiPicker()"><i>😍</i><span>אייקון</span></button>
+            <div id="emojiPicker" class="emoji-picker">
+                <button onclick="addIcon('❤️')">❤️</button><button onclick="addIcon('🔥')">🔥</button>
+                <button onclick="addIcon('✨')">✨</button><button onclick="addIcon('✅')">✅</button>
+                <button onclick="addIcon('📍')">📍</button><button onclick="addIcon('🇮🇱')">🇮🇱</button>
+                <button onclick="addIcon('📢')">📢</button><button onclick="addIcon('💪')">💪</button>
+            </div>
+        </div>
+        <label class="tool-btn"><i>🖼️</i><span>תמונה</span><input type="file" id="imageLoader" accept="image/*" style="display:none"></label>
+        <button class="tool-btn" onclick="toggleBold()"><i>B</i><span>הדגשה</span></button>
         <button class="tool-btn" onclick="document.getElementById('colorInput').click()">
-            <div class="color-preview" id="colorDisplay" style="background: white;"></div>
-            <span>צבע</span>
+            <div class="color-preview" id="colorDisplay" style="background: white;"></div><span>צבע</span>
             <input type="color" id="colorInput" style="display:none">
         </button>
         <button class="tool-btn" onclick="changeBg()"><i>🎨</i><span>רקע</span></button>
@@ -196,73 +164,56 @@
 
     <div id="textEditorOverlay">
         <textarea id="textEditorInput" placeholder="הקלידו כאן..."></textarea>
-        <button class="btn-done" id="btnDone">סיום</button>
+        <button class="btn-done" onclick="handleTextDone()">סיום</button>
     </div>
 
     <script>
-        const fixHeight = () => {
-            let vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-        };
-        window.addEventListener('resize', () => { fixHeight(); resizeCanvas(); });
-        fixHeight();
+        // חסימת זום במובייל (Pinch to zoom)
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
 
-        // אתחול הקנבס
+        // חסימת זום במחשב (Ctrl + Scroll)
+        document.addEventListener('wheel', (e) => {
+            if (e.ctrlKey) e.preventDefault();
+        }, { passive: false });
+
+        const fixHeight = () => {
+            document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+        };
+        window.addEventListener('resize', fixHeight); fixHeight();
+
         const canvas = new fabric.Canvas('storyCanvas', {
             width: 1080, height: 1920, backgroundColor: '#001f3f'
         });
 
-        const bgOptions = ['#001f3f', '#1a1a1a', '#c0392b', '#2980b9', '#27ae60'];
+        // רק תכלת וכחול כהה
+        const bgOptions = ['#001f3f', '#87CEEB'];
         let bgIdx = 0, history = [];
 
         fabric.Object.prototype.set({
             transparentCorners: false, cornerColor: '#007bff', cornerStrokeColor: '#ffffff',
             cornerStyle: 'circle', cornerSize: 40, padding: 15
         });
-        fabric.Object.prototype.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
 
-        // פונקציה לטעינת הלוגו הקבוע (Overlay)
         function loadLogo() {
             fabric.Image.fromURL('logo.png', function(img) {
-                // הגדרת גודל הלוגו (למשל רוחב 250 פיקסלים)
                 img.scaleToWidth(250);
-                
-                // מיקום: אמצע (540) ובמרחק 80 פיקסלים מהקצה העליון
-                img.set({
-                    left: 540,
-                    top: 80,
-                    originX: 'center',
-                    originY: 'top',
-                    selectable: false, // אי אפשר לבחור
-                    evented: false    // אי אפשר להזיז/ללחוץ
-                });
-                
+                img.set({ left: 540, top: 80, originX: 'center', originY: 'top', selectable: false, evented: false });
                 canvas.setOverlayImage(img, canvas.renderAll.bind(canvas));
             });
         }
 
         function resizeCanvas() {
             const container = document.querySelector('.editor-container');
-            const padding = 30;
-            const scale = Math.min(
-                (container.clientWidth - padding) / 1080, 
-                (container.clientHeight - padding - 80) / 1920
-            );
-            
-            canvas.setZoom(scale);
-            canvas.setWidth(1080 * scale);
-            canvas.setHeight(1920 * scale);
-            
+            const scale = Math.min((container.clientWidth - 20) / 1080, (container.clientHeight - 100) / 1920);
+            canvas.setZoom(scale); canvas.setWidth(1080 * scale); canvas.setHeight(1920 * scale);
             const wrapper = document.getElementById('canvas-wrapper');
-            wrapper.style.width = canvas.width + "px";
-            wrapper.style.height = canvas.height + "px";
-            canvas.renderAll();
+            wrapper.style.width = canvas.width + "px"; wrapper.style.height = canvas.height + "px";
         }
 
-        // ניהול טקסט
         const overlay = document.getElementById('textEditorOverlay');
         const textInput = document.getElementById('textEditorInput');
-        const btnDone = document.getElementById('btnDone');
         let currentEditingObj = null;
 
         function openTextEditor(obj = null) {
@@ -279,24 +230,38 @@
                     currentEditingObj.set('text', val);
                 } else {
                     const t = new fabric.IText(val, {
-                        left: 540, top: 960, fontSize: 100, fill: 'white',
+                        left: 540, top: 960, fontFamily: 'FtMonopol', fontSize: 100, fill: 'white',
                         textAlign: 'center', originX: 'center', originY: 'center', fontWeight: 'bold', direction: 'rtl', editable: false
                     });
                     t.on('mousedblclick', () => openTextEditor(t));
-                    canvas.add(t);
-                    canvas.setActiveObject(t);
+                    canvas.add(t); canvas.setActiveObject(t);
                 }
                 saveState();
-            } else if (currentEditingObj) {
-                canvas.remove(currentEditingObj);
-            }
-            overlay.style.display = 'none';
-            canvas.renderAll();
+            } else if (currentEditingObj) { canvas.remove(currentEditingObj); }
+            overlay.style.display = 'none'; canvas.renderAll();
         }
 
-        btnDone.onclick = handleTextDone;
+        function toggleBold() {
+            const obj = canvas.getActiveObject();
+            if (obj && obj.type === 'i-text') {
+                const isBold = obj.fontWeight === 'bold';
+                obj.set('fontWeight', isBold ? 'normal' : 'bold');
+                canvas.renderAll(); saveState();
+            }
+        }
 
-        // אירועי בחירה ותפריט צף
+        function toggleEmojiPicker() {
+            const p = document.getElementById('emojiPicker');
+            p.style.display = (p.style.display === 'grid') ? 'none' : 'grid';
+        }
+
+        function addIcon(emoji) {
+            const t = new fabric.IText(emoji, { 
+                left: 540, top: 960, fontSize: 150, originX: 'center', originY: 'center', editable: false 
+            });
+            canvas.add(t); canvas.setActiveObject(t); toggleEmojiPicker(); saveState();
+        }
+
         canvas.on('selection:created', updateFloatingMenu);
         canvas.on('selection:updated', updateFloatingMenu);
         canvas.on('selection:cleared', () => document.getElementById('floatingMenu').style.display = 'none');
@@ -316,10 +281,8 @@
             if (obj) obj.clone(cloned => {
                 canvas.discardActiveObject();
                 cloned.set({ left: obj.left + 40, top: obj.top + 40 });
-                canvas.add(cloned);
-                canvas.setActiveObject(cloned);
-                saveState();
-            });
+                canvas.add(cloned); canvas.setActiveObject(cloned); saveState();
+            }, ['fontWeight', 'fontFamily', 'direction']);
         }
 
         function deleteObj() {
@@ -327,24 +290,12 @@
             if (obj) { canvas.remove(obj); canvas.discardActiveObject(); saveState(); }
         }
 
-        // כלי עבודה
         document.getElementById('colorInput').oninput = function() {
             const color = this.value;
             document.getElementById('colorDisplay').style.backgroundColor = color;
             const obj = canvas.getActiveObject();
-            if (obj && obj.type === 'i-text') {
-                obj.set('fill', color);
-                canvas.renderAll();
-                saveState();
-            }
+            if (obj && obj.type === 'i-text') { obj.set('fill', color); canvas.renderAll(); saveState(); }
         };
-
-        function addIcon() {
-            const heart = new fabric.IText('❤️', { 
-                left: 540, top: 960, fontSize: 150, originX: 'center', originY: 'center', editable: false 
-            });
-            canvas.add(heart); canvas.setActiveObject(heart); saveState();
-        }
 
         document.getElementById('imageLoader').onchange = function(e) {
             const reader = new FileReader();
@@ -366,12 +317,12 @@
         function resetCanvas() {
             if(confirm("למחוק הכל?")) { 
                 canvas.getObjects().forEach(o => canvas.remove(o)); 
-                saveState(); 
+                canvas.setBackgroundColor('#001f3f', () => { canvas.renderAll(); saveState(); });
             }
         }
 
         function saveState() {
-            history.push(JSON.stringify(canvas.toJSON()));
+            history.push(JSON.stringify(canvas.toJSON(['fontWeight', 'fontFamily', 'direction'])));
             if(history.length > 20) history.shift();
         }
 
@@ -393,10 +344,9 @@
             else { const a = document.createElement('a'); a.href = dataURL; a.download = 'story.png'; a.click(); }
         }
 
-        // הרצה ראשונית
         document.fonts.ready.then(() => {
             resizeCanvas();
-            loadLogo(); // טעינת הלוגו הקבוע
+            loadLogo();
             saveState();
         });
     </script>
