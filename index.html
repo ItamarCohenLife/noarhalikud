@@ -6,15 +6,14 @@
     <title>FtMonopol Story Editor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
+        /* טעינת הפונט המקורי */
         @font-face {
             font-family: 'FtMonopol';
             src: url('FtMonopol-Bold.woff2') format('woff2');
             font-weight: bold;
         }
 
-        :root {
-            --vh: 1vh; /* לחישוב מדויק במובייל */
-        }
+        :root { --vh: 1vh; }
 
         * { 
             box-sizing: border-box; 
@@ -27,32 +26,31 @@
             background-color: #000;
             color: white;
             margin: 0;
-            padding: 0;
             display: flex;
             height: calc(var(--vh) * 100);
             width: 100vw;
             overflow: hidden;
-            position: fixed; /* מונע גלילה ורענון במשיכה באייפון */
+            position: fixed;
         }
 
-        /* תפריט צד מעוצב */
+        /* תפריט צד אנכי */
         .side-menu {
-            width: 85px;
-            background: #121212;
+            width: 80px;
+            background: #111;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
-            gap: 10px;
-            border-left: 1px solid #2c2c2c;
+            padding: env(safe-area-inset-top) 5px env(safe-area-inset-bottom) 5px;
+            gap: 8px;
+            border-left: 1px solid #333;
             z-index: 100;
         }
 
         .menu-item {
             background: #1e1e1e;
-            border: 1px solid #333;
+            border: 1px solid #444;
             color: white;
-            width: 65px;
+            width: 100%;
             height: 60px;
             border-radius: 12px;
             display: flex;
@@ -60,90 +58,88 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
+            transition: 0.2s;
         }
 
-        .menu-item:active { background: #333; transform: scale(0.92); }
-        .menu-item i { font-style: normal; font-size: 22px; margin-bottom: 2px; }
-        .menu-item span { font-size: 11px; font-weight: bold; opacity: 0.9; }
+        .menu-item:active { background: #333; transform: scale(0.9); }
+        .menu-item b { font-size: 20px; font-style: normal; }
+        .menu-item span { font-size: 10px; margin-top: 2px; font-weight: bold; }
 
-        /* אזור הקנבס */
+        /* בורר צבעים */
+        .color-picker-btn {
+            position: relative;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            border: 2px solid white;
+            background: linear-gradient(45deg, red, blue, green);
+            overflow: hidden;
+        }
+        #colorInput {
+            position: absolute; top: -5px; left: -5px; width: 50px; height: 50px; opacity: 0; cursor: pointer;
+        }
+
+        /* אזור העריכה */
         .main-editor {
             flex-grow: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #080808;
-            padding: 10px;
+            background: #050505;
             position: relative;
+            padding: 10px;
         }
 
-        /* בורר צבעים מיוחד */
-        .color-circle {
-            width: 35px; height: 35px;
-            border-radius: 50%;
-            border: 2px solid #fff;
-            background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
-            position: relative;
-            cursor: pointer;
-        }
-        #colorPicker {
-            position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;
-        }
+        #canvas-wrapper { box-shadow: 0 0 30px rgba(0,0,0,0.8); }
 
         /* מגירת אייקונים */
-        .icon-library {
+        .icon-drawer {
             position: absolute; bottom: -350px; left: 0; width: 100%; height: 300px;
-            background: #181818; border-top: 1px solid #333; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            display: grid; grid-template-columns: repeat(4, 1fr); overflow-y: auto; padding: 20px; gap: 15px; z-index: 200;
+            background: #1a1a1a; border-top: 2px solid #333; transition: 0.4s ease;
+            display: grid; grid-template-columns: repeat(4, 1fr); overflow-y: auto; padding: 20px; gap: 15px; z-index: 150;
         }
-        .icon-library.open { bottom: 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); }
-        .icon-item { font-size: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .icon-drawer.open { bottom: 0; }
+        .icon-item { font-size: 40px; text-align: center; cursor: pointer; padding: 10px; background: #222; border-radius: 10px; }
 
-        /* מודאל טקסט */
+        /* פופ-אפ טקסט */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 30px;
+            background: rgba(0,0,0,0.95); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
         }
         .modal textarea {
-            width: 100%; height: 120px; background: #111; color: white; border: 2px solid #007bff;
-            border-radius: 20px; padding: 20px; font-size: 26px; text-align: center; outline: none;
+            width: 100%; height: 120px; background: #222; color: white; border: 2px solid #007bff;
+            border-radius: 15px; padding: 15px; font-size: 24px; text-align: center; outline: none;
         }
-        .modal-btns { display: flex; gap: 15px; width: 100%; margin-top: 25px; }
-        .modal-btns button { flex: 1; padding: 18px; border-radius: 12px; border: none; font-size: 18px; font-weight: bold; }
+        .modal-btns { display: flex; gap: 10px; width: 100%; margin-top: 15px; }
+        .modal-btns button { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: bold; font-size: 18px; }
 
-        /* התאמות מחשב */
-        @media (min-width: 768px) {
-            .side-menu { width: 100px; gap: 20px; }
-            .menu-item { width: 80px; height: 75px; }
-        }
+        input[type="file"] { display: none; }
     </style>
 </head>
 <body>
 
     <div class="side-menu">
-        <div class="menu-item" onclick="openTextModal()"><i>T</i><span>טקסט</span></div>
-        <div class="menu-item" onclick="toggleIcons()"><i>⭐</i><span>אייקון</span></div>
-        <label class="menu-item"><i>🖼️</i><span>תמונה</span><input type="file" id="imageLoader" accept="image/*"></label>
+        <div class="menu-item" onclick="openTextModal()"><b>T</b><span>טקסט</span></div>
+        <div class="menu-item" onclick="toggleIcons()"><b>⭐</b><span>אייקון</span></div>
+        <label class="menu-item"><b>🖼️</b><span>תמונה</span><input type="file" id="imageLoader" accept="image/*"></label>
         
         <div class="menu-item">
-            <div class="color-circle">
-                <input type="color" id="colorPicker" value="#ffffff">
+            <div class="color-picker-btn">
+                <input type="color" id="colorInput" value="#ffffff">
             </div>
             <span>צבע</span>
         </div>
 
-        <div class="menu-item" onclick="changeBg()"><i>🎨</i><span>רקע</span></div>
-        <div class="menu-item" onclick="deleteObj()" style="border-color: #551a1a;"><i>🗑️</i><span>מחק</span></div>
+        <div class="menu-item" onclick="changeBg()"><b>🎨</b><span>רקע</span></div>
+        <div class="menu-item" onclick="deleteObj()" style="border-color: #551a1a;"><b>🗑️</b><span>מחק</span></div>
         
-        <div class="menu-item" onclick="shareImg()" style="background: #25d366; border:none; margin-top: auto;"><i>💾</i><span>שמור</span></div>
+        <div class="menu-item" onclick="shareImg()" style="background: #25d366; border:none; margin-top: auto;"><b>💾</b><span>שמור</span></div>
     </div>
 
     <div class="main-editor">
         <div id="canvas-wrapper"><canvas id="storyCanvas"></canvas></div>
     </div>
 
-    <div id="iconLibrary" class="icon-library">
+    <div id="iconDrawer" class="icon-drawer">
         <div class="icon-item" onclick="addIcon('heart')">❤️</div>
         <div class="icon-item" onclick="addIcon('star')">⭐</div>
         <div class="icon-item" onclick="addIcon('fire')">🔥</div>
@@ -155,23 +151,20 @@
     </div>
 
     <div id="textModal" class="modal">
-        <textarea id="modalInput" placeholder="הקלידו כאן..."></textarea>
+        <textarea id="modalInput" placeholder="מה לכתוב?"></textarea>
         <div class="modal-btns">
-            <button onclick="closeModal()" style="background:#333; color:white;">ביטול</button>
+            <button onclick="closeModal()" style="background:#444; color:white;">ביטול</button>
             <button onclick="saveTextFromModal()" style="background:#007bff; color:white;">אישור</button>
         </div>
     </div>
 
     <script>
-        // תיקון גובה מסך למובייל
-        const setVH = () => document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
-        window.addEventListener('resize', setVH);
-        setVH();
+        // התאמה למובייל - גובה מסך אמיתי
+        const updateVH = () => document.documentElement.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
+        window.addEventListener('resize', updateVH);
+        updateVH();
 
-        const canvas = new fabric.Canvas('storyCanvas', { 
-            width: 1080, height: 1920, backgroundColor: '#001f3f' 
-        });
-
+        const canvas = new fabric.Canvas('storyCanvas', { width: 1080, height: 1920, backgroundColor: '#001f3f' });
         let currentEditingText = null;
 
         function fitCanvas() {
@@ -182,13 +175,13 @@
 
         function loadLogo() {
             fabric.Image.fromURL('logo.png', function(img) {
-                img.set({ left: 540, top: 200, originX: 'center', selectable: false, evented: false });
-                img.scaleToWidth(380); canvas.add(img); canvas.renderAll();
+                img.set({ left: 540, top: 180, originX: 'center', selectable: false, evented: false });
+                img.scaleToWidth(350); canvas.add(img); canvas.renderAll();
             });
         }
 
-        // שינוי צבע
-        document.getElementById('colorPicker').oninput = function() {
+        // שינוי צבע לאובייקט נבחר
+        document.getElementById('colorInput').oninput = function() {
             const active = canvas.getActiveObject();
             if (active) {
                 if (active.type === 'i-text' || active.type === 'text') active.set('fill', this.value);
@@ -197,6 +190,7 @@
             }
         };
 
+        // הוספת אייקון (SVG)
         const svgs = {
             heart: 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z',
             star: 'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z',
@@ -212,7 +206,7 @@
             canvas.add(path); canvas.setActiveObject(path); toggleIcons();
         }
 
-        function toggleIcons() { document.getElementById('iconLibrary').classList.toggle('open'); }
+        function toggleIcons() { document.getElementById('iconDrawer').classList.toggle('open'); }
 
         function openTextModal(existing = null) {
             currentEditingText = existing;
@@ -230,7 +224,7 @@
             else {
                 const text = new fabric.IText(val, {
                     left: 540, top: 960, fontFamily: 'FtMonopol', fill: 'white',
-                    fontSize: 110, textAlign: 'center', originX: 'center', direction: 'rtl'
+                    fontSize: 100, textAlign: 'center', originX: 'center', direction: 'rtl'
                 });
                 text.on('mousedblclick', () => openTextModal(text));
                 canvas.add(text); canvas.setActiveObject(text);
@@ -238,9 +232,9 @@
             canvas.renderAll(); closeModal();
         }
 
-        const bgs = ['#001f3f', '#000000', '#222', '#ffffff', '#b91d1d'];
+        const bgColors = ['#001f3f', '#000', '#fff', '#e74c3c', '#2ecc40'];
         let bIdx = 0;
-        function changeBg() { bIdx = (bIdx+1)%bgs.length; canvas.setBackgroundColor(bgs[bIdx], canvas.renderAll.bind(canvas)); }
+        function changeBg() { bIdx = (bIdx+1)%bgColors.length; canvas.setBackgroundColor(bgColors[bIdx], canvas.renderAll.bind(canvas)); }
 
         document.getElementById('imageLoader').onchange = function(e) {
             const reader = new FileReader();
@@ -255,14 +249,20 @@
 
         function deleteObj() { const a = canvas.getActiveObject(); if(a && a.selectable !== false) canvas.remove(a); }
 
+        // שמירה ושיתוף כ-JPEG
         async function shareImg() {
             canvas.setZoom(1); canvas.setWidth(1080); canvas.setHeight(1920);
             canvas.getElement().toBlob(async (blob) => {
-                const file = new File([blob], 'ft-monopol-story.png', { type: 'image/png' });
+                const file = new File([blob], 'story.jpg', { type: 'image/jpeg' });
                 if (navigator.share) await navigator.share({ files: [file] });
-                else { const l = document.createElement('a'); l.download = 'story.png'; l.href = canvas.toDataURL(); l.click(); }
+                else {
+                    const l = document.createElement('a');
+                    l.download = 'story.jpg';
+                    l.href = canvas.toDataURL({ format: 'jpeg', quality: 1.0 });
+                    l.click();
+                }
                 fitCanvas();
-            }, 'image/png');
+            }, 'image/jpeg', 1.0);
         }
 
         window.addEventListener('resize', fitCanvas);
