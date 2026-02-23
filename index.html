@@ -23,6 +23,7 @@
             box-sizing: border-box; 
             font-family: 'FtMonopol', sans-serif; 
             -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         body {
@@ -36,7 +37,7 @@
             position: fixed;
         }
 
-        /* תפריט צד */
+        /* תפריט צד רספונסיבי */
         .side-menu {
             width: 90px;
             background: #111;
@@ -47,6 +48,7 @@
             gap: 10px;
             border-left: 1px solid #333;
             z-index: 100;
+            overflow-y: auto;
         }
 
         .menu-item {
@@ -54,7 +56,7 @@
             border: 1px solid #444;
             color: white;
             width: 100%;
-            height: 70px;
+            min-height: 70px;
             border-radius: 15px;
             display: flex;
             flex-direction: column;
@@ -62,11 +64,21 @@
             justify-content: center;
             cursor: pointer;
             transition: 0.2s;
+            flex-shrink: 0;
         }
 
+        .menu-item:hover { background: #252525; }
         .menu-item:active { background: #333; transform: scale(0.95); }
-        .menu-item b { font-size: 22px; }
+        .menu-item b { font-size: 20px; }
         .menu-item span { font-size: 11px; margin-top: 4px; font-weight: bold; }
+
+        /* כפתור שמירה בצבע רגיל */
+        .save-btn {
+            background: #333 !important;
+            border: 1px solid #555 !important;
+            margin-top: auto;
+            height: 80px;
+        }
 
         .color-picker-btn {
             position: relative;
@@ -85,40 +97,50 @@
             justify-content: center;
             background: #050505;
             position: relative;
+            padding: 10px;
         }
 
         #canvas-wrapper { 
             box-shadow: 0 0 50px rgba(0,0,0,1); 
             border: 1px solid #222;
+            max-width: 100%;
+            max-height: 100%;
         }
 
-        /* סרגל כלים עליון מעודכן */
+        /* סרגל כלים עליון */
         .top-tools {
             position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 10px; z-index: 50; align-items: center;
+            display: flex; gap: 8px; z-index: 50; align-items: center; width: auto;
         }
 
         .tool-group {
-            display: flex; background: rgba(30,30,30,0.9); padding: 5px; border-radius: 50px; border: 1px solid #444; gap: 2px;
+            display: flex; background: rgba(30,30,30,0.95); padding: 4px; border-radius: 50px; border: 1px solid #444; gap: 2px;
         }
 
         .tool-btn {
-            padding: 8px 14px; border-radius: 50px; border: none; color: #fff; background: transparent; cursor: pointer; font-weight: bold; font-size: 14px;
+            padding: 8px 14px; border-radius: 50px; border: none; color: #fff; background: transparent; cursor: pointer; 
+            font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 5px; white-space: nowrap;
         }
         .tool-btn:disabled { opacity: 0.3; cursor: default; }
         .tool-btn.active { background: #fff; color: #000; }
-        .arrow-btn { font-size: 18px; padding: 5px 15px; }
 
         /* מגירת אייקונים */
         .icon-drawer {
             position: absolute; bottom: -350px; left: 0; width: 100%; height: 300px;
             background: #1a1a1a; border-top: 1px solid #333; transition: 0.4s ease;
-            display: grid; grid-template-columns: repeat(4, 1fr); overflow-y: auto; padding: 20px; gap: 15px; z-index: 200;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); overflow-y: auto; padding: 20px; gap: 15px; z-index: 200;
         }
         .icon-drawer.open { bottom: 0; }
-        .icon-item { font-size: 40px; text-align: center; cursor: pointer; padding: 10px; background: #222; border-radius: 12px; }
+        .icon-item { font-size: 35px; text-align: center; cursor: pointer; padding: 10px; background: #222; border-radius: 12px; }
 
         input[type="file"] { display: none; }
+
+        /* התאמות למסכים קטנים מאוד */
+        @media (max-width: 400px) {
+            .side-menu { width: 75px; padding: 5px; }
+            .menu-item { min-height: 60px; border-radius: 10px; }
+            .tool-btn { padding: 6px 10px; font-size: 12px; }
+        }
     </style>
 </head>
 <body>
@@ -137,14 +159,14 @@
         <div class="menu-item" onclick="deleteObj()" style="border-color: #551a1a;"><b>🗑️</b><span>מחק</span></div>
         <div class="menu-item" onclick="resetCanvas()" style="border-color: #ff9800;"><b>🔄</b><span>איפוס</span></div>
         
-        <div class="menu-item" onclick="shareImg()" style="background: #25d366; border:none; margin-top: auto; height: 80px;"><b>💾</b><span>שמור</span></div>
+        <div class="menu-item save-btn" onclick="shareImg()"><b>💾</b><span>שמור</span></div>
     </div>
 
     <div class="main-editor">
         <div class="top-tools">
             <div class="tool-group">
-                <button class="tool-btn arrow-btn" onclick="undo()" id="undoBtn">↪️</button>
-                <button class="tool-btn arrow-btn" onclick="redo()" id="redoBtn">↩️</button>
+                <button class="tool-btn" onclick="undo()" id="undoBtn">↪️ חזור</button>
+                <button class="tool-btn" onclick="redo()" id="redoBtn">↩️</button>
             </div>
             <div class="tool-group">
                 <button id="boldBtn" class="tool-btn active" onclick="updateSelectedWeight('bold')">מודגש</button>
@@ -161,15 +183,16 @@
         <div class="icon-item" onclick="addIcon('check')">✅</div>
         <div class="icon-item" onclick="addIcon('crown')">👑</div>
         <div class="icon-item" onclick="addIcon('zap')">⚡</div>
+        <div class="icon-item" onclick="addIcon('flag')">🇮🇱</div>
     </div>
 
     <script>
         const canvas = new fabric.Canvas('storyCanvas', { 
             width: 1080, height: 1920, 
-            backgroundColor: '#001f3f'
+            backgroundColor: '#001f3f',
+            preserveObjectStacking: true
         });
 
-        // מערכת Undo/Redo
         let stateStack = [];
         let redoStack = [];
         let isMoving = false;
@@ -178,7 +201,7 @@
             if (isMoving) return;
             const json = JSON.stringify(canvas.toJSON(['lineHeight', 'direction', 'fontWeight', 'selectable', 'evented']));
             stateStack.push(json);
-            redoStack = []; // ניקוי ה-redo כשיש פעולה חדשה
+            redoStack = [];
             updateUndoButtons();
         }
 
@@ -211,12 +234,10 @@
             document.getElementById('redoBtn').disabled = redoStack.length === 0;
         }
 
-        // האזנה לשינויים לשמירה אוטומטית
         canvas.on('object:modified', saveState);
         canvas.on('object:added', saveState);
         canvas.on('object:removed', saveState);
 
-        // הגדרות אובייקטים
         fabric.Object.prototype.set({
             transparentCorners: false,
             cornerColor: '#ffffff',
@@ -224,11 +245,12 @@
             cornerStyle: 'circle',
             cornerSize: 40,
             padding: 10,
-            uniformScaling: true
+            uniformScaling: true,
+            borderScaleFactor: 3
         });
         fabric.Object.prototype.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
 
-        const backgroundOptions = ['#001f3f', '#87CEEB', '#0a0a0a', '#5DADE2', '#1a2a6c', '#b21f1f'];
+        const backgroundOptions = ['#001f3f', '#0a0a0a', '#1a2a6c', '#b21f1f', '#2d5a27'];
         let bgIdx = 0;
 
         function changeBg() {
@@ -250,14 +272,14 @@
                 img.set({ left: 540, top: 200, originX: 'center', selectable: false, evented: false });
                 img.scaleToWidth(380); 
                 canvas.add(img);
-                saveState(); // מצב התחלתי
+                saveState();
             }, { crossOrigin: 'anonymous' });
         }
 
         function addNewText() {
-            const text = new fabric.IText('לחץ פעמיים\nלעריכה', {
+            const text = new fabric.IText('טקסט חדש', {
                 left: 540, top: 960,
-                fontFamily: 'FtMonopol', fontSize: 100, fill: 'white',
+                fontFamily: 'FtMonopol', fontSize: 110, fill: 'white',
                 textAlign: 'center', originX: 'center', originY: 'center',
                 direction: 'rtl', fontWeight: 'bold', lineHeight: 0.8, editable: true
             });
@@ -299,8 +321,6 @@
         function resetCanvas() {
             if(confirm("לאפס את העיצוב?")) {
                 canvas.getObjects().forEach(obj => { if(obj.selectable) canvas.remove(obj); });
-                bgIdx = 0;
-                canvas.setBackgroundColor(backgroundOptions[0], canvas.renderAll.bind(canvas));
                 saveState();
             }
         }
@@ -312,11 +332,18 @@
                 fire: 'M13.5,0.67c0,0-2.34,5.15-5.32,6.31C6,7.7,4.3,10.7,4.3,12.61c0,3.34,2.72,6.06,6.06,6.06c3.34,0,6.06-2.72,6.06-6.06 c0-3.13-2.54-5.67-5.67-5.67',
                 check: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z',
                 crown: 'M5 16h14a2 2 0 0 0 2-2V5l-5 4-4-4-4 4-5-4v9a2 2 0 0 0 2 2z',
-                zap: 'M7 2v11h3v9l7-12h-4l4-8z'
+                zap: 'M7 2v11h3v9l7-12h-4l4-8z',
+                flag: 'M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z'
             };
-            const path = new fabric.Path(svgs[name]);
-            path.set({ left: 540, top: 1000, scaleX: 6, scaleY: 6, fill: '#fff', originX: 'center', originY: 'center' });
-            canvas.add(path); canvas.setActiveObject(path); toggleIcons();
+            if(name === 'flag') {
+                 const text = new fabric.IText('🇮🇱', { left: 540, top: 1000, fontSize: 150, originX: 'center', originY: 'center' });
+                 canvas.add(text); canvas.setActiveObject(text);
+            } else {
+                const path = new fabric.Path(svgs[name]);
+                path.set({ left: 540, top: 1000, scaleX: 6, scaleY: 6, fill: '#fff', originX: 'center', originY: 'center' });
+                canvas.add(path); canvas.setActiveObject(path);
+            }
+            toggleIcons();
         }
 
         function toggleIcons() { document.getElementById('iconDrawer').classList.toggle('open'); }
@@ -346,7 +373,9 @@
             else { const l = document.createElement('a'); l.download = 'story.jpg'; l.href = dataURL; l.click(); }
         }
 
-        window.addEventListener('resize', fitCanvas);
+        const updateVH = () => document.documentElement.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
+        window.addEventListener('resize', () => { updateVH(); fitCanvas(); });
+        updateVH();
         document.fonts.ready.then(() => { fitCanvas(); loadLogo(); });
     </script>
 </body>
