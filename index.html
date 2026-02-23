@@ -6,7 +6,6 @@
     <title>עיצוב סטורי - צוות דוברות</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
-        /* טעינת הפונטים מהתיקייה המקומית */
         @font-face { 
             font-family: 'FtMonopol'; 
             src: url('FtMonopol-Bold.woff2') format('woff2'); 
@@ -29,41 +28,29 @@
 
         * { 
             box-sizing: border-box; 
-            font-family: 'FtMonopol', sans-serif; /* שימוש בפונט כברירת מחדל */
+            font-family: 'FtMonopol', sans-serif; 
             -webkit-tap-highlight-color: transparent; 
             margin: 0; padding: 0;
             user-select: none;
-            touch-action: none; /* מניעת מחוות דפדפן */
+            touch-action: none; 
         }
 
         html, body {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            position: fixed;
-            background-color: var(--bg);
+            height: 100%; width: 100%; overflow: hidden;
+            position: fixed; background-color: var(--bg);
         }
 
         body { display: flex; flex-direction: column; height: calc(var(--vh, 1vh) * 100); }
 
         .app-bar {
-            height: 60px;
-            background: var(--panel);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: var(--safe-top) 15px 0 15px;
-            border-bottom: 1px solid #333;
-            z-index: 100;
+            height: 60px; background: var(--panel);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: var(--safe-top) 15px 0 15px; border-bottom: 1px solid #333; z-index: 100;
         }
 
         .editor-container {
-            flex: 1;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000;
+            flex: 1; position: relative; display: flex;
+            align-items: center; justify-content: center; background: #000;
         }
 
         #canvas-wrapper { box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; }
@@ -76,8 +63,7 @@
             display: flex; justify-content: space-around;
             border: 1px solid rgba(255,255,255,0.1);
             position: absolute; bottom: calc(15px + var(--safe-bottom));
-            left: 50%; transform: translateX(-50%);
-            z-index: 500;
+            left: 50%; transform: translateX(-50%); z-index: 500;
         }
 
         .tool-btn {
@@ -87,7 +73,6 @@
         .tool-btn i { font-size: 18px; font-style: normal; }
         .tool-btn span { font-size: 9px; opacity: 0.7; }
 
-        /* תפריט אייקונים מהיר */
         .emoji-picker {
             display: none; position: absolute; bottom: 80px; 
             background: var(--panel); padding: 10px; border-radius: 15px;
@@ -112,8 +97,8 @@
 
         #textEditorInput {
             width: 100%; flex: 1; background: transparent; border: none;
-            color: white; font-size: 32px; text-align: center; outline: none;
-            direction: rtl; font-family: 'FtMonopol', sans-serif;
+            color: white; font-size: 28px; text-align: center; outline: none;
+            direction: rtl; font-family: 'FtMonopol', sans-serif; resize: none;
         }
 
         .btn-done {
@@ -125,8 +110,10 @@
         .color-preview { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid white; }
     </style>
 </head>
-<body oncontextmenu="return false;"> <div class="app-bar">
-        <div class="logo-area"><div class="logo-top">צוות דוברות</div><div class="logo-bottom">STORY EDITOR</div></div>
+<body oncontextmenu="return false;">
+
+    <div class="app-bar">
+        <div class="logo-area"><div class="logo-top" style="color:var(--accent); font-weight:bold;">צוות דוברות</div><div class="logo-bottom" style="font-size:10px; opacity:0.6;">STORY EDITOR</div></div>
         <div style="display: flex; gap: 10px;">
             <button class="tool-btn" onclick="undo()"><i>↩️</i></button>
             <button class="tool-btn" onclick="shareImg()"><i>💾</i></button>
@@ -168,26 +155,17 @@
     </div>
 
     <script>
-        // חסימת זום במובייל (Pinch to zoom)
-        document.addEventListener('touchstart', (e) => {
-            if (e.touches.length > 1) e.preventDefault();
-        }, { passive: false });
+        // חסימת זום
+        document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+        document.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
 
-        // חסימת זום במחשב (Ctrl + Scroll)
-        document.addEventListener('wheel', (e) => {
-            if (e.ctrlKey) e.preventDefault();
-        }, { passive: false });
-
-        const fixHeight = () => {
-            document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
-        };
+        const fixHeight = () => document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
         window.addEventListener('resize', fixHeight); fixHeight();
 
         const canvas = new fabric.Canvas('storyCanvas', {
             width: 1080, height: 1920, backgroundColor: '#001f3f'
         });
 
-        // רק תכלת וכחול כהה
         const bgOptions = ['#001f3f', '#87CEEB'];
         let bgIdx = 0, history = [];
 
@@ -229,9 +207,15 @@
                 if (currentEditingObj) {
                     currentEditingObj.set('text', val);
                 } else {
-                    const t = new fabric.IText(val, {
-                        left: 540, top: 960, fontFamily: 'FtMonopol', fontSize: 100, fill: 'white',
-                        textAlign: 'center', originX: 'center', originY: 'center', fontWeight: 'bold', direction: 'rtl', editable: false
+                    // שימוש ב-Textbox למניעת יציאה מהגבולות
+                    const t = new fabric.Textbox(val, {
+                        left: 540, top: 960, 
+                        fontFamily: 'FtMonopol', fontSize: 100, fill: 'white',
+                        textAlign: 'center', originX: 'center', originY: 'center', 
+                        fontWeight: 'bold', direction: 'rtl',
+                        width: 900, // רוחב מקסימלי לטקסט
+                        editable: false,
+                        splitByGrapheme: false // שבירת מילים שלמה
                     });
                     t.on('mousedblclick', () => openTextEditor(t));
                     canvas.add(t); canvas.setActiveObject(t);
@@ -243,9 +227,8 @@
 
         function toggleBold() {
             const obj = canvas.getActiveObject();
-            if (obj && obj.type === 'i-text') {
-                const isBold = obj.fontWeight === 'bold';
-                obj.set('fontWeight', isBold ? 'normal' : 'bold');
+            if (obj && (obj.type === 'textbox' || obj.type === 'i-text')) {
+                obj.set('fontWeight', obj.fontWeight === 'bold' ? 'normal' : 'bold');
                 canvas.renderAll(); saveState();
             }
         }
@@ -282,7 +265,7 @@
                 canvas.discardActiveObject();
                 cloned.set({ left: obj.left + 40, top: obj.top + 40 });
                 canvas.add(cloned); canvas.setActiveObject(cloned); saveState();
-            }, ['fontWeight', 'fontFamily', 'direction']);
+            }, ['fontWeight', 'fontFamily', 'direction', 'width', 'textAlign']);
         }
 
         function deleteObj() {
@@ -294,7 +277,9 @@
             const color = this.value;
             document.getElementById('colorDisplay').style.backgroundColor = color;
             const obj = canvas.getActiveObject();
-            if (obj && obj.type === 'i-text') { obj.set('fill', color); canvas.renderAll(); saveState(); }
+            if (obj && (obj.type === 'textbox' || obj.type === 'i-text')) { 
+                obj.set('fill', color); canvas.renderAll(); saveState(); 
+            }
         };
 
         document.getElementById('imageLoader').onchange = function(e) {
@@ -322,7 +307,7 @@
         }
 
         function saveState() {
-            history.push(JSON.stringify(canvas.toJSON(['fontWeight', 'fontFamily', 'direction'])));
+            history.push(JSON.stringify(canvas.toJSON(['fontWeight', 'fontFamily', 'direction', 'width', 'textAlign'])));
             if(history.length > 20) history.shift();
         }
 
